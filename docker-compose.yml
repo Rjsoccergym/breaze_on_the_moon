@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Tu Frontend
+  frontend:
+    build:
+      context: ./frontend  # Apunta a la carpeta del frontend
+      dockerfile: Dockerfile
+    container_name: breaze-frontend-c
+    ports:
+      - "8080:80"
+    networks:
+      - breaze-net
+    depends_on:
+      - backend
+
+  # El Backend del equipo
+  backend:
+    build:
+      context: ./backend  # Apunta a la carpeta del backend
+      # Asumiendo que el equipo creó un Dockerfile ahí adentro
+    container_name: breaze-backend-c
+    ports:
+      - "3000:3000" # Ajusta este puerto según lo que use el backend (ej. 8080, 5000)
+    networks:
+      - breaze-net
+
+networks:
+  breaze-net:
+    driver: bridge
