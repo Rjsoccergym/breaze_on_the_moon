@@ -2,6 +2,8 @@ package com.auth.org.application.service;
 
 import com.auth.org.application.port.ICodificadorPort;
 import com.auth.org.application.port.IEventPublisherPort;
+import com.auth.org.domain.entity.Administrador;
+import com.auth.org.domain.entity.Cliente;
 import com.auth.org.domain.exception.InvalidCredentialsException;
 import com.auth.org.domain.exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
@@ -47,17 +49,26 @@ public class AuthService {
 
     @Transactional
     public void registrarUsuario(RegisterRequestDTO request) {
+        registrarUsuario(request, Rol.CLIENT);
+    }
+
+    @Transactional
+    public void registrarAdministrador(RegisterRequestDTO request) {
+        registrarUsuario(request, Rol.ADMIN);
+    }
+
+    private void registrarUsuario(RegisterRequestDTO request, Rol rol) {
         if (personaRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new UserAlreadyExistsException("El nombre de usuario ya existe");
         }
 
-        Persona persona = new Persona();
+        Persona persona = (rol.equals(Rol.CLIENT)) ? new Cliente() : new Administrador();
         persona.setUsername(request.getUsername());
         persona.setEmail(request.getEmail());
         persona.setNombre(request.getNombre());
         persona.setApellido(request.getApellido());
         persona.setPassword(codificador.codificar(request.getPassword()));
-        persona.setRol(Rol.CLIENT); // Rol por defecto según requerimiento
+        persona.setRol(rol);
 
         personaRepository.save(persona);
         eventPublisher.notificarEvento("REGISTER", "Nuevo usuario: " + persona.getUsername());
