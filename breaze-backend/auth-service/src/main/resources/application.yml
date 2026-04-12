@@ -12,12 +12,12 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5431}/${DB_NAME:authDB}
     username: ${DB_USER:auth}
     password: ${DB_PASSWORD:auth123}
-    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: ${HIBERNATE_DDL_AUTO:update}
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -37,4 +37,4 @@ jwt:
   expiration: 3600000 # 1 hora en milisegundos
 
 app:
-  auditoria-url: ${AUDITORIA_URL:http://api-gateway/auditoria}
+  auditoria-url: ${AUDITORIA_URL:https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits}
