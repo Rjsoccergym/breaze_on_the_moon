@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: "Sistema de Gestión Hotelera - Breaze in the Moon"
+  description: "Microservicio encargado de administrar el inventario de habitaciones del hotel. Este servicio es independiente y posee su propia base de datos."
+  version: "1.0.0"
+servers:
+  - url: "http://api.breazeinthemoon.com/v1/rooms"
+    description: "API Gateway (Entorno de Producción)"
+  - url: "http://localhost:8080/api/v1/rooms"
+    description: "Servidor de Desarrollo Local"
+
+paths:
+  /:
+    get:
+      summary: "Consultar habitaciones"
+      description: |
+        Los clientes únicamente pueden consultar las habitaciones disponibles. 
+        Un administrador puede consultar todo el inventario
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [disponible, ocupada, en mantenimiento]
+          description: "Filtro por estado de la habitación."
+      responses:
+        '200':
+          description: "Lista de habitaciones obtenida con éxito."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: "Registrar una nueva habitación"
+      description: "Permite registrar una nueva habitación en el sistema. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+      responses:
+        '201':
+          description: "Habitación registrada exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /{id}:
+    put:
+      summary: "Actualizar información de la habitación"
+      description: "Permite modificar los datos base de una habitación. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: "Identificador único de la habitación."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+      responses:
+        '200':
+          description: "Habitación actualizada exitosamente."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: "Habitación no encontrada."
+
+  /{id}/status:
+    patch:
+      summary: "Cambiar estado de la habitación"
+      description: "Operación específica para actualizar únicamente la situación actual de la habitación. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [disponible, ocupada, en mantenimiento]
+      responses:
+        '200':
+          description: "Estado actualizado exitosamente."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "El API Gateway valida la firma del token. El microservicio decodifica el token para extraer el rol."
+
+  responses:
+    Unauthorized:
+      description: "Token inválido o ausente (gestionado por el API Gateway)."
+    Forbidden:
+      description: "El usuario autenticado no tiene permisos para esta operación."
+
+  schemas:
+    Room:
+      type: object
+      description: "Entidad principal de Habitación."
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Número identificador único."
+        tipo:
+          type: string
+          enum: [sencilla, doble, suite]
+          description: "Tipo de habitación."
+        descripcion:
+          type: string
+          description: "Descripción detallada."
+        capacidadMax:
+          type: integer
+          description: "Capacidad máxima de huéspedes."
+        precionoche:
+          type: number
+          format: float
+          description: "Precio por noche."
+        estado:
+          type: string
+          enum: [disponible, ocupada, en mantenimiento]
+          description: "Situación actual de la habitación."
+
+    RoomInput:
+      type: object
+      description: "Objeto utilizado para crear o actualizar una habitación."
+      required:
+        - tipo
+        - descripcion
+        - capacidadMax
+        - precionoche
+      properties:
+        tipo:
+          type: string
+          enum: [sencilla, doble, suite]
+        descripcion:
+          type: string
+        capacidadMax:
+          type: integer
+        precionoche:
+          type: number

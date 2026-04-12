@@ -1,0 +1,25 @@
+server:
+  port: 8081 # Cada micro tendrá su puerto (8081 Auth, 8082 Rooms, 8083 Booking)
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5431}/${DB_NAME:authDB}
+    username: ${DB_USER:auth}
+    password: ${DB_PASSWORD:auth123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Configuración personalizada para tu JwtService
+jwt:
+  secret: ${JWT_SECRET:mi_clave_secreta_super_segura_de_maestria_2026}
+  expiration: 3600000 # 1 hora en milisegundos

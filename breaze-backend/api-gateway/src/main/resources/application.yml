@@ -1,0 +1,27 @@
+server:
+  port: 8080 # El puerto único que verá el cliente
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        # Rutas para Autenticación
+        - id: auth-service
+          uri: lb://auth-service # lb:// activa el Balanceo de Carga con Eureka
+          predicates:
+            - Path=/auth/**
+
+        # Rutas para Habitaciones
+        - id: room-service
+          uri: lb://room-service
+          predicates:
+            - Path=/api/v1/rooms/**
+
+        # Rutas para Reservas
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/v1/bookings/**
