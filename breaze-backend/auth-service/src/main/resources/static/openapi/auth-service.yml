@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: "Breaze in the Moon - Auth Service"
+  description: "Microservicio de autenticación y emisión de tokens JWT para el sistema hotelero Breaze in the Moon."
+  version: "1.0.0"
+servers:
+  - url: "http://api.breazeinthemoon.com/api/v1/auth"
+    description: "API Gateway (Producción)"
+  - url: "http://localhost:8081/api/v1/auth"
+    description: "Servidor local de desarrollo"
+paths:
+  /login:
+    post:
+      summary: "Iniciar sesión"
+      description: "Permite a los usuarios autenticarse y recibir un token JWT con su rol."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: "Autenticación exitosa."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: "Solicitud inválida."
+        '401':
+          description: "Credenciales inválidas."
+  /register:
+    post:
+      summary: "Registrar nuevo usuario"
+      description: "Permite crear una nueva cuenta de cliente en el sistema."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: "Usuario registrado exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: "Solicitud inválida."
+        '409':
+          description: "El nombre de usuario ya existe."
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: "Nombre de usuario del cliente."
+        password:
+          type: string
+          description: "Contraseña del usuario."
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+        - nombre
+        - apellido
+        - email
+      properties:
+        username:
+          type: string
+          description: "Nombre de usuario deseado."
+        password:
+          type: string
+          description: "Contraseña con al menos 8 caracteres."
+        nombre:
+          type: string
+          description: "Nombre del usuario."
+        apellido:
+          type: string
+          description: "Apellido del usuario."
+        email:
+          type: string
+          format: email
+          description: "Correo electrónico válido."
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "JWT de acceso."
+        username:
+          type: string
+          description: "Nombre de usuario autenticado."
+        rol:
+          type: string
+          enum: [ADMIN, CLIENT]
+          description: "Rol asignado al usuario."
+        mensaje:
+          type: string
+          description: "Mensaje de bienvenida o información adicional."
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "Mensaje de resultado de la operación."

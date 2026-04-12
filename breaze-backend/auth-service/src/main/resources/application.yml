@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: auth-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5431}/${DB_NAME:authDB}
@@ -19,7 +22,19 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Auth Service API
+        url: /openapi/auth-service.yml
+
 # Configuración personalizada para tu JwtService
 jwt:
   secret: ${JWT_SECRET:mi_clave_secreta_super_segura_de_maestria_2026}
   expiration: 3600000 # 1 hora en milisegundos
+
+app:
+  auditoria-url: ${AUDITORIA_URL:http://api-gateway/auditoria}

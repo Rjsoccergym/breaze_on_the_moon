@@ -1,5 +1,5 @@
 server:
-  port: 8080 # El puerto único que verá el cliente
+  port: 8080
 
 spring:
   application:
@@ -8,20 +8,37 @@ spring:
   cloud:
     gateway:
       routes:
-        # Rutas para Autenticación
+        # Microservicio de Autenticación
         - id: auth-service
-          uri: lb://auth-service # lb:// activa el Balanceo de Carga con Eureka
+          uri: http://localhost:8081 # URL directa del micro de Auth
           predicates:
             - Path=/auth/**
 
-        # Rutas para Habitaciones
+        # Microservicio de Habitaciones (Room Service)
         - id: room-service
-          uri: lb://room-service
+          uri: http://localhost:8082 # URL directa del micro de Rooms
           predicates:
             - Path=/api/v1/rooms/**
 
-        # Rutas para Reservas
+        # Microservicio de Reservas (Booking Service)
         - id: booking-service
-          uri: lb://booking-service
+          uri: http://localhost:8083 # URL directa del micro de Bookings
           predicates:
             - Path=/api/v1/bookings/**
+
+      # Configuración de CORS centralizada (Vital si vas a conectar un Frontend o App)
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+            allowedHeaders: "*"
+
+jwt:
+  secret: ${JWT_SECRET:mi_clave_secreta_super_segura_de_maestria_2026}
+  expiration: 3600000 # 1 hora en milisegundos
