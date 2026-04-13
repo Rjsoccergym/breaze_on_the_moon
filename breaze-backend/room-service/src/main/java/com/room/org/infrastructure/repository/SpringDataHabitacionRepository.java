@@ -1,19 +1,14 @@
-package com.room.org.domain.repository;
+package com.room.org.infrastructure.repository;
 
 import com.room.org.domain.entity.Habitacion;
 import com.room.org.domain.enums.EstadoHabitacion;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface IHabitacionRepository {
-
-    Habitacion save(Habitacion habitacion);
-
-    Optional<Habitacion> findById(UUID id);
-
-    List<Habitacion> findAll();
+public interface SpringDataHabitacionRepository extends JpaRepository<Habitacion, UUID> {
 
     List<Habitacion> findByEstado(EstadoHabitacion estado);
 
@@ -23,3 +18,4 @@ public interface IHabitacionRepository {
 
     boolean existsByNumeroIdentificadorAndIdNot(String numeroIdentificador, UUID id);
 }
+

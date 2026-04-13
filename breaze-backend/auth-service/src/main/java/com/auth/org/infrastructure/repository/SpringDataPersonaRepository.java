@@ -1,11 +1,15 @@
-package com.auth.org.domain.repository;
+package com.auth.org.infrastructure.repository;
 
 import com.auth.org.domain.entity.Persona;
-import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface IPersonaRepository {
+import java.util.Optional;
+import java.util.UUID;
+
+public interface SpringDataPersonaRepository extends JpaRepository<Persona, UUID> {
     Optional<Persona> findByUsername(String username);
     Optional<Persona> findByEmail(String email);
     Optional<Persona> findByNumeroIdentificacion(String numeroIdentificacion);
-    Persona save(Persona persona);
 }
+
+

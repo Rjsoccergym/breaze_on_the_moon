@@ -20,4 +20,5 @@ spring:
     show-sql: true
 
 app:
-  auditoria-url: ${AUDITORIA_URL}
+  # Por defecto, la auditoría sale por el API Gateway.
+  auditoria-url: ${AUDITORIA_URL:http://localhost:8080/internal/audits}

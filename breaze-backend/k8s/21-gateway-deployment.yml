@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: breaze
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-gateway
+                  key: JWT_SECRET
+            - name: AUDITORIA_LAMBDA_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secret-gateway
+                  key: AUDITORIA_LAMBDA_URL
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_0_URI
+              value: http://auth-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_1_URI
+              value: http://room-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_2_URI
+              value: http://booking-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES_3_URI
+              valueFrom:
+                secretKeyRef:
+                  name: secret-gateway
+                  key: AUDITORIA_LAMBDA_URL

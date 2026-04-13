@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: room-service
+  namespace: breaze
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: room-service
+  template:
+    metadata:
+      labels:
+        app: room-service
+    spec:
+      containers:
+        - name: room-service
+          image: room-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: DB_HOST
+              value: room-postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: secret-room
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-room
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-room
+                  key: DB_PASSWORD
+            - name: AUDITORIA_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secret-room
+                  key: AUDITORIA_URL
