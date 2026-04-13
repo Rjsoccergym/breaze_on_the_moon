@@ -1,14 +1,14 @@
 server:
-  port: 8083 # Cada micro tendrá su puerto (8081 Auth, 8082 Rooms, 8083 Booking)
+  port: 8083
 
 spring:
   application:
     name: booking-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:bookingDB}
-    username: ${DB_USER:booking}
-    password: ${DB_PASSWORD:booking123}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -19,7 +19,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# Configuración personalizada para tu JwtService
-jwt:
-  secret: ${JWT_SECRET:mi_clave_secreta_super_segura_de_maestria_2026}
-  expiration: 3600000 # 1 hora en milisegundos
+services:
+  room-service:
+    url: ${ROOM_SERVICE_URL:http://localhost:8082}
+
+app:
+  auditoria-url: ${AUDITORIA_URL}

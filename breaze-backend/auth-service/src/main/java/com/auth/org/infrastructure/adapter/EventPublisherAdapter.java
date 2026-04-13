@@ -7,8 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +20,6 @@ public class EventPublisherAdapter implements IEventPublisherPort {
 
     @Value("${app.auditoria-url}")
     private String lambdaUrl;
-
-    @Value("${spring.application.name:auth-service}")
-    private String appName;
 
     @Async
     @Override
@@ -46,8 +42,6 @@ public class EventPublisherAdapter implements IEventPublisherPort {
         Map<String, Object> payload = new HashMap<>();
         payload.put("tipo", tipo);
         payload.put("descripcion", descripcion);
-        payload.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-        payload.put("source", appName);
         return payload;
     }
 }
