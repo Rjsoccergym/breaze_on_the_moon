@@ -1,9 +1,9 @@
 package com.auth.org.application.service;
 
+import com.auth.org.domain.entity.Persona;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import com.auth.org.domain.entity.Persona;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +27,7 @@ public class JwtService {
         // Inyectamos el ROL para que el Gateway y otros micros lo lean
         extraClaims.put("rol", persona.getRol().name());
         extraClaims.put("nombre", persona.getNombre());
+        extraClaims.put("userId", persona.getId().toString());
 
         return Jwts.builder()
                 .claims(extraClaims)
@@ -39,10 +40,10 @@ public class JwtService {
 
     public Claims extractClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private SecretKey getSigningKey() {
