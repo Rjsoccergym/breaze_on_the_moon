@@ -1,27 +1,65 @@
-version: '3.8'
-
 services:
-  # Tu Frontend
+  # 1. FRONTEND: Tu aplicación React
   frontend:
     build:
-      context: ./frontend  # Apunta a la carpeta del frontend
-      dockerfile: Dockerfile
+      context: ./breaze-frontend
     container_name: breaze-frontend-c
     ports:
       - "8080:80"
     networks:
       - breaze-net
     depends_on:
-      - backend
+      - api-gateway
 
-  # El Backend del equipo
-  backend:
+  # 2. API GATEWAY: El "portero" que recibe las llamadas del Frontend (puerto 8081)
+  api-gateway:
     build:
-      context: ./backend  # Apunta a la carpeta del backend
-      # Asumiendo que el equipo creó un Dockerfile ahí adentro
-    container_name: breaze-backend-c
+      context: ./breaze-backend
+      args:
+        MODULE_NAME: api-gateway
+    container_name: breaze-api-gateway
     ports:
-      - "3000:3000" # Ajusta este puerto según lo que use el backend (ej. 8080, 5000)
+      - "8081:8080"
+    environment:
+      # Configuramos la auditoría también aquí por si el Gateway genera eventos
+      - APP_AUDITORIA-URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
+    networks:
+      - breaze-net
+
+  # 3. AUTH-SERVICE: Donde está el código de EventPublisherAdapter
+  auth-service:
+    build:
+      context: ./breaze-backend
+      args:
+        MODULE_NAME: auth-service
+    container_name: breaze-auth-service
+    environment:
+      # Conexión vital a tu Lambda de AWS
+      - APP_AUDITORIA-URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
+    networks:
+      - breaze-net
+
+  # 4. ROOM-SERVICE: Gestión de habitaciones
+  room-service:
+    build:
+      context: ./breaze-backend
+      args:
+        MODULE_NAME: room-service
+    container_name: breaze-room-service
+    environment:
+      - APP_AUDITORIA-URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
+    networks:
+      - breaze-net
+
+  # 5. BOOKING-SERVICE: Gestión de reservas
+  booking-service:
+    build:
+      context: ./breaze-backend
+      args:
+        MODULE_NAME: booking-service
+    container_name: breaze-booking-service
+    environment:
+      - APP_AUDITORIA-URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
     networks:
       - breaze-net
 

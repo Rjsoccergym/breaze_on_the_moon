@@ -91,6 +91,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.auth.org.AuthServiceApplication</mainClass> 
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
