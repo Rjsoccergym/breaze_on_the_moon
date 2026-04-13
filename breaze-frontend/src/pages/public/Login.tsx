@@ -1,122 +1,255 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// Si tu backend ya está listo y usas el cliente autogenerado, lo importarías aquí:
-// import { AuthService } from '../../api-client'; 
+import apiClient from '../../apiClient';
+
+type View = 'login' | 'register';
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '12px',
+  border: '1px solid #ccc',
+  borderRadius: '4px',
+  boxSizing: 'border-box',
+  fontSize: '14px',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: '6px',
+  color: '#003366',
+  fontWeight: 'bold',
+  fontSize: '14px',
+};
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [view, setView] = useState<View>('login');
+
+  // --- Login state ---
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // --- Register state ---
+  const [regNombre, setRegNombre] = useState('');
+  const [regApellido, setRegApellido] = useState('');
+  const [regUsername, setRegUsername] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirm, setRegConfirm] = useState('');
+
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Función auxiliar para fabricar un token válido en Base64
-  const createMockToken = (email: string, userRole: string) => {
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const payload = btoa(JSON.stringify({ 
-      sub: email, 
-      role: userRole, 
-      exp: Math.floor(Date.now() / 1000) + 3600 // Expira en 1 hora
-    }));
-    return `${header}.${payload}.FirmaFalsa123`;
+  const switchView = (target: View) => {
+    setError('');
+    setSuccess('');
+    setView(target);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ==================== LOGIN ====================
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      const cleanEmail = email.trim().toLowerCase();
-      const cleanPassword = password.trim();
-
-      if (cleanEmail === 'admin@breaze.com' && cleanPassword === '123') {
-        // Fabricamos el token de ADMIN al vuelo
-        const mockAdminToken = createMockToken(cleanEmail, 'ADMIN');
-        login(mockAdminToken);
-        navigate('/admin');
-        
-      } else if (cleanEmail === 'cliente@breaze.com' && cleanPassword === '123') {
-        // Fabricamos el token de CLIENT al vuelo
-        const mockClientToken = createMockToken(cleanEmail, 'CLIENT');
-        login(mockClientToken);
-        navigate('/habitaciones');
-        
+      const { data } = await apiClient.post('/v1/auth/login', {
+        username: loginEmail.trim(),
+        password: loginPassword.trim(),
+      });
+      login(data.token);
+      navigate(data.rol === 'ADMIN' ? '/admin' : '/habitaciones');
+    } catch (err: any) {
+      console.error('[Login Error]', err);
+      if (!err.response) {
+        setError(`Sin conexión al servidor: ${err.message}`);
       } else {
-        throw new Error('Credenciales inválidas');
+        const data = err.response.data;
+        const msg =
+          data?.message ||
+          data?.error ||
+          (typeof data === 'string' ? data : null) ||
+          `Error ${err.response.status}: ${err.response.statusText}`;
+        setError(msg || 'Ocurrió un error inesperado');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    } catch (err) {
-      console.error("🚨 ERROR REAL CAPTURADO:", err); 
-      setError('Correo o contraseña incorrectos. Intenta nuevamente.');
+  // ==================== REGISTER ====================
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (regPassword !== regConfirm) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    if (regPassword.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await apiClient.post('/v1/auth/register', {
+        nombre: regNombre.trim(),
+        apellido: regApellido.trim(),
+        username: regUsername.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+      });
+      setSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
+      setRegNombre(''); setRegApellido(''); setRegUsername('');
+      setRegEmail(''); setRegPassword(''); setRegConfirm('');
+      setTimeout(() => switchView('login'), 1800);
+    } catch (err: any) {
+      if (!err.response) {
+        // Sin respuesta: red caída, CORS o backend apagado
+        setError(`Sin conexión al servidor: ${err.message}`);
+      } else {
+        // Hay respuesta HTTP — extraemos el detalle
+        const data = err.response.data;
+        const msg =
+          data?.message ||
+          data?.error ||
+          (typeof data === 'string' ? data : null) ||
+          `Error ${err.response.status}: ${err.response.statusText}`;
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f4f7f6', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-        
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ color: '#003366', margin: '0 0 10px 0', lineHeight: '1.3' }}>
-            Breaze in the <br /> 
-            <span style={{ color: '#FFD700' }}>Moon</span></h1>
-          <p style={{ color: '#666', margin: '0' }}>Sistema de Gestión Hotelera</p>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f4f7f6', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+      <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '420px' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h1 style={{ color: '#003366', margin: '0 0 6px 0', lineHeight: '1.3' }}>
+            Breaze in the <br />
+            <span style={{ color: '#FFD700' }}>Moon</span>
+          </h1>
+          <p style={{ color: '#666', margin: '0', fontSize: '14px' }}>Sistema de Gestión Hotelera</p>
         </div>
 
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: '24px' }}>
+          {(['login', 'register'] as View[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => switchView(tab)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px',
+                color: view === tab ? '#003366' : '#9ca3af',
+                borderBottom: view === tab ? '2px solid #003366' : '2px solid transparent',
+                marginBottom: '-2px',
+                transition: 'color 0.2s',
+              }}
+            >
+              {tab === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
+            </button>
+          ))}
+        </div>
+
+        {/* Mensajes */}
         {error && (
-          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '4px', marginBottom: '20px', fontSize: '14px', textAlign: 'center' }}>
+          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', textAlign: 'center' }}>
             {error}
           </div>
         )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#003366', fontWeight: 'bold' }}>Correo Electrónico</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '12px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-            />
+        {success && (
+          <div style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '10px', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', textAlign: 'center' }}>
+            {success}
           </div>
+        )}
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#003366', fontWeight: 'bold' }}>Contraseña</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '12px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-            />
-          </div>
+        {/* ===== FORMULARIO LOGIN ===== */}
+        {view === 'login' && (
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div>
+              <label style={labelStyle}>Usuario o Correo</label>
+              <input
+                type="text"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                placeholder="usuario o correo@ejemplo.com"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Contraseña</label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                style={inputStyle}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ backgroundColor: '#003366', color: '#FFD700', padding: '14px', border: 'none', borderRadius: '4px', fontSize: '15px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '4px' }}
+            >
+              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+            </button>
+          </form>
+        )}
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ 
-              backgroundColor: '#003366', 
-              color: '#FFD700', 
-              padding: '14px', 
-              border: 'none', 
-              borderRadius: '4px', 
-              fontSize: '16px', 
-              fontWeight: 'bold', 
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '10px'
-            }}
-          >
-            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
-          </button>
-        </form>
+        {/* ===== FORMULARIO REGISTRO ===== */}
+        {view === 'register' && (
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Nombre</label>
+                <input type="text" value={regNombre} onChange={(e) => setRegNombre(e.target.value)} required placeholder="Juan" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Apellido</label>
+                <input type="text" value={regApellido} onChange={(e) => setRegApellido(e.target.value)} required placeholder="Pérez" style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Nombre de usuario</label>
+              <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required placeholder="juanperez123" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Correo electrónico</label>
+              <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} required placeholder="correo@ejemplo.com" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Contraseña <span style={{ color: '#9ca3af', fontWeight: 'normal' }}>(mín. 8 caracteres)</span></label>
+              <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required minLength={8} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Confirmar contraseña</label>
+              <input type="password" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} required minLength={8} style={inputStyle} />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ backgroundColor: '#003366', color: '#FFD700', padding: '14px', border: 'none', borderRadius: '4px', fontSize: '15px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '4px' }}
+            >
+              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+            </button>
+          </form>
+        )}
 
       </div>
     </div>
