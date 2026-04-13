@@ -12,19 +12,19 @@ spring:
         - id: auth-service
           uri: http://localhost:8081 # URL directa del micro de Auth
           predicates:
-            - Path=/auth/**
+            - Path=/api/v1/auth/**
 
         # Microservicio de Habitaciones (Room Service)
         - id: room-service
           uri: http://localhost:8082 # URL directa del micro de Rooms
           predicates:
-            - Path=/api/v1/rooms/**
+            - Path=/api/v1/room/**
 
         # Microservicio de Reservas (Booking Service)
         - id: booking-service
           uri: http://localhost:8083 # URL directa del micro de Bookings
           predicates:
-            - Path=/api/v1/bookings/**
+            - Path=/api/v1/booking/**
 
       # Configuración de CORS centralizada (Vital si vas a conectar un Frontend o App)
       globalcors:
@@ -32,6 +32,7 @@ spring:
           '[/**]':
             allowedOrigins: "*"
             allowedMethods:
+              - OPTIONS
               - GET
               - POST
               - PUT
@@ -40,5 +41,5 @@ spring:
             allowedHeaders: "*"
 
 jwt:
-  secret: ${JWT_SECRET:mi_clave_secreta_super_segura_de_maestria_2026}
+  secret: ${JWT_SECRET}
   expiration: 3600000 # 1 hora en milisegundos

@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: "Breaze in the Moon - Booking Service"
+  description: |
+    Microservicio de reservas del sistema hotelero Breaze in the Moon.
+    Gestiona el ciclo de vida de las reservas (crear, confirmar, cancelar)
+    y se comunica con room-service para verificar disponibilidad y actualizar
+    el estado de las habitaciones. La autenticación es gestionada por el
+    API Gateway, que propaga la identidad del usuario mediante headers internos.
+  version: "1.0.0"
+servers:
+  - url: "http://api.breazeinthemoon.com/api/v1/booking"
+    description: "API Gateway (Producción)"
+  - url: "http://localhost:8080/api/v1/booking"
+    description: "API Gateway (Desarrollo Local)"
+paths:
+  /:
+    get:
+      summary: "Listar reservas por estado"
+      description: "Obtiene todas las reservas filtradas por estado. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: estado
+          required: true
+          schema:
+            type: string
+            enum: [CREADA, CONFIRMADA, CANCELADA]
+          description: "Estado de las reservas a consultar."
+      responses:
+        '200':
+          description: "Lista de reservas."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: "Crear una nueva reserva"
+      description: |
+        Crea una reserva para la habitación indicada.
+        El sistema verifica automáticamente la disponibilidad de la habitación
+        y calcula el monto total en función del precio por noche y el período.
+        Disponible para cualquier usuario autenticado.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingInput'
+      responses:
+        '201':
+          description: "Reserva creada exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: "Datos de entrada inválidos o fechas incorrectas."
+        '409':
+          description: "La habitación no está disponible para el período seleccionado."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /{id}:
+    delete:
+      summary: "Cancelar una reserva"
+      description: |
+        Cancela la reserva indicada y libera la habitación (estado DISPONIBLE).
+        Un cliente solo puede cancelar sus propias reservas.
+        Un administrador puede cancelar cualquier reserva.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "UUID de la reserva."
+      responses:
+        '204':
+          description: "Reserva cancelada exitosamente."
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: "Reserva no encontrada."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /{id}/confirmar:
+    patch:
+      summary: "Confirmar una reserva"
+      description: |
+        Marca la reserva como CONFIRMADA y actualiza el estado de la habitación
+        a OCUPADA en room-service. Requiere rol ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "UUID de la reserva."
+      responses:
+        '200':
+          description: "Reserva confirmada exitosamente."
+        '404':
+          description: "Reserva no encontrada."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /cliente/{clienteId}:
+    get:
+      summary: "Ver historial de reservas de un cliente"
+      description: |
+        Devuelve el historial de reservas del cliente especificado.
+        Un cliente solo puede consultar su propio historial.
+        Un administrador puede consultar el historial de cualquier cliente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: clienteId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "UUID del cliente."
+      responses:
+        '200':
+          description: "Historial de reservas del cliente."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Autenticación gestionada por el API Gateway. El microservicio recibe
+        la identidad validada mediante los headers internos:
+          - X-Authenticated-User: nombre de usuario
+          - X-Authenticated-Role: rol (ADMIN o CLIENT)
+          - X-Authenticated-User-Id: UUID del usuario
+        No se valida el JWT en este servicio.
+  responses:
+    Unauthorized:
+      description: "Token JWT inválido o ausente. Gestionado por el API Gateway."
+    Forbidden:
+      description: "El usuario autenticado no tiene el rol requerido para esta operación."
+  schemas:
+    Booking:
+      type: object
+      description: "Entidad de Reserva."
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Identificador UUID autogenerado."
+        habitacionId:
+          type: string
+          format: uuid
+          description: "UUID de la habitación reservada."
+        clienteId:
+          type: string
+          format: uuid
+          description: "UUID del cliente que realizó la reserva."
+        fechaInicio:
+          type: string
+          format: date
+          description: "Fecha de inicio de la estancia (YYYY-MM-DD)."
+        fechaFin:
+          type: string
+          format: date
+          description: "Fecha de fin de la estancia (YYYY-MM-DD)."
+        precioTotal:
+          type: number
+          format: double
+          description: "Monto total calculado (precioNoche × número de noches)."
+        estado:
+          type: string
+          enum: [CREADA, CONFIRMADA, CANCELADA]
+          description: "Estado actual de la reserva."
+    BookingInput:
+      type: object
+      description: "Datos necesarios para crear una reserva."
+      required:
+        - habitacionId
+        - fechaInicio
+        - fechaFin
+      properties:
+        habitacionId:
+          type: string
+          format: uuid
+          description: "UUID de la habitación a reservar."
+        clienteId:
+          type: string
+          format: uuid
+          description: |
+            UUID del cliente. Opcional. Solo puede ser especificado por un ADMIN
+            para crear la reserva en nombre de otro cliente.
+        fechaInicio:
+          type: string
+          format: date
+          description: "Fecha de inicio de la estancia (YYYY-MM-DD)."
+        fechaFin:
+          type: string
+          format: date
+          description: "Fecha de fin de la estancia (YYYY-MM-DD). Debe ser posterior a fechaInicio."
+

@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: "Sistema de Gestión Hotelera - Breaze in the Moon"
+  description: "Microservicio encargado de administrar el inventario de habitaciones del hotel. Este servicio es independiente y posee su propia base de datos. La autenticación es gestionada exclusivamente por el API Gateway, que propaga la identidad a través de headers internos."
+  version: "1.1.0"
+servers:
+  - url: "http://api.breazeinthemoon.com/api/v1/room"
+    description: "API Gateway (Producción)"
+  - url: "http://localhost:8080/api/v1/room"
+    description: "API Gateway (Desarrollo Local)"
+paths:
+  /:
+    get:
+      summary: "Consultar habitaciones"
+      description: |
+        Los clientes únicamente pueden consultar las habitaciones disponibles.
+        Un administrador puede consultar todo el inventario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          description: "Filtro por estado de la habitación."
+      responses:
+        '200':
+          description: "Lista de habitaciones obtenida con éxito."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: "Registrar una nueva habitación"
+      description: "Permite registrar una nueva habitación en el sistema. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+      responses:
+        '201':
+          description: "Habitación registrada exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: "Datos de entrada inválidos."
+        '409':
+          description: "El numeroIdentificador ya existe en el sistema."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /{id}:
+    get:
+      summary: "Obtener habitación por ID"
+      description: |
+        Recupera los detalles de una habitación específica.
+        Un cliente solo puede obtener habitaciones en estado DISPONIBLE.
+        Un administrador puede obtener cualquier habitación.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Identificador UUID de la habitación."
+      responses:
+        '200':
+          description: "Habitación encontrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: "Habitación no encontrada."
+    put:
+      summary: "Actualizar información de la habitación"
+      description: "Permite modificar los datos base de una habitación. Requiere rol ADMIN."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Identificador UUID de la habitación."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+      responses:
+        '200':
+          description: "Habitación actualizada exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: "Datos de entrada inválidos."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: "Habitación no encontrada."
+  /{id}/status:
+    patch:
+      summary: "Cambiar estado de la habitación"
+      description: "Actualiza únicamente el estado actual de la habitación. Requiere rol ADMIN o llamada interna de servicio (SERVICE)."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomStatusInput'
+      responses:
+        '200':
+          description: "Estado actualizado exitosamente."
+        '400':
+          description: "Estado inválido."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: "Habitación no encontrada."
+  /{id}/availability:
+    get:
+      summary: "Verificar disponibilidad de habitación"
+      description: "Comprueba si una habitación está en estado DISPONIBLE. Usado internamente por booking-service."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Identificador UUID de la habitación."
+      responses:
+        '200':
+          description: "Resultado de disponibilidad."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+                    description: "true si la habitación está DISPONIBLE."
+        '404':
+          description: "Habitación no encontrada."
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Autenticación gestionada por el API Gateway. El microservicio recibe la identidad validada mediante los headers X-Authenticated-User, X-Authenticated-Role y X-Authenticated-User-Id. No se valida el JWT en este servicio."
+  responses:
+    Unauthorized:
+      description: "Token inválido o ausente (gestionado por el API Gateway)."
+    Forbidden:
+      description: "El usuario autenticado no tiene permisos para esta operación."
+  schemas:
+    Room:
+      type: object
+      description: "Entidad principal de Habitación."
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Identificador UUID autogenerado."
+        numeroIdentificador:
+          type: string
+          description: "Número de habitación definido por el negocio (ej: '101', 'SUITE-A'). Único en el sistema."
+        tipo:
+          type: string
+          enum: [SENCILLA, DOBLE, SUITE]
+          description: "Tipo de habitación."
+        descripcion:
+          type: string
+          description: "Descripción detallada."
+        capacidadMaxima:
+          type: integer
+          description: "Capacidad máxima de huéspedes."
+        precioNoche:
+          type: number
+          format: double
+          description: "Precio por noche."
+        estado:
+          type: string
+          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          description: "Situación actual de la habitación."
+    RoomInput:
+      type: object
+      description: "Objeto utilizado para crear o actualizar una habitación."
+      required:
+        - numeroIdentificador
+        - tipo
+        - descripcion
+        - capacidadMaxima
+        - precioNoche
+      properties:
+        numeroIdentificador:
+          type: string
+          description: "Número de habitación definido por el negocio. Debe ser único."
+        tipo:
+          type: string
+          enum: [SENCILLA, DOBLE, SUITE]
+        descripcion:
+          type: string
+        capacidadMaxima:
+          type: integer
+        precioNoche:
+          type: number
+          format: double
+    RoomStatusInput:
+      type: object
+      description: "Objeto para actualizar únicamente el estado de la habitación."
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          description: "Nuevo estado de la habitación."

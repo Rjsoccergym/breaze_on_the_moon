@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -16,18 +18,30 @@ public class EventPublisherAdapter implements IEventPublisherPort {
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.auditoria-url:http://api-gateway/auditoria}")
+    @Value("${app.auditoria-url}")
     private String lambdaUrl;
 
     @Async
     @Override
     public void notificarEvento(String tipo, String descripcion) {
-        try {
-            Map<String, String> payload = Map.of("tipo", tipo, "descripcion", descripcion);
-            restTemplate.postForEntity(lambdaUrl, payload, String.class);
-            log.info("[AUDITORIA] Evento {} enviado exitosamente", tipo);
-        } catch (Exception e) {
-            log.error("[AUDITORIA] Error al notificar evento: {}", e.getMessage());
+        if (tipo == null || tipo.isBlank() || descripcion == null) {
+            log.warn("[AUDITORIA] Evento ignorado: tipo o descripción nulos o vacíos");
+            return;
         }
+
+        try {
+            Map<String, Object> payload = construirPayload(tipo, descripcion);
+            restTemplate.postForEntity(lambdaUrl, payload, String.class);
+            log.info("[AUDITORIA] Evento {} enviado exitosamente a Lambda", tipo);
+        } catch (Exception e) {
+            log.error("[AUDITORIA] Error al notificar evento {}: {}", tipo, e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Object> construirPayload(String tipo, String descripcion) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("tipo", tipo);
+        payload.put("descripcion", descripcion);
+        return payload;
     }
 }

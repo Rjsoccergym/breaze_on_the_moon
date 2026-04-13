@@ -51,6 +51,33 @@ paths:
           description: "Solicitud inválida."
         '409':
           description: "El nombre de usuario ya existe."
+  /register-admin:
+    post:
+      summary: "Registrar administrador"
+      description: "Permite crear un usuario con rol ADMIN. Requiere un token válido de un administrador."
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: "Administrador registrado exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: "Solicitud inválida."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: "El nombre de usuario ya existe."
 components:
   schemas:
     LoginRequest:

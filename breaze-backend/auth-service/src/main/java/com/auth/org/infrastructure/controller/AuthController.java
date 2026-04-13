@@ -32,4 +32,11 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "Usuario registrado exitosamente"));
     }
+
+    @PostMapping("/register-admin")
+    public ResponseEntity<Map<String, String>> registrarAdmin(@Valid @RequestBody RegisterRequestDTO request) {
+        autenticacionService.registrarAdministrador(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Administrador registrado exitosamente"));
+    }
 }

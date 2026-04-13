@@ -36,3 +36,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Secrets — NEVER commit real credentials ###
+# Los archivos .env son solo para desarrollo local.
+# En producción, usar Kubernetes Secrets o AWS Secrets Manager.
+.env
+**/.env
+*.env
