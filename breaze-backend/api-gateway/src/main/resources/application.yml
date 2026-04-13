@@ -26,6 +26,12 @@ spring:
           predicates:
             - Path=/api/v1/booking/**
 
+        # Canal interno de auditoría hacia Lambda (enricha y persiste en MongoDB)
+        - id: audit-lambda
+          uri: ${AUDITORIA_LAMBDA_URL}
+          predicates:
+            - Path=/internal/audits
+
       # Configuración de CORS centralizada (Vital si vas a conectar un Frontend o App)
       globalcors:
         cors-configurations:

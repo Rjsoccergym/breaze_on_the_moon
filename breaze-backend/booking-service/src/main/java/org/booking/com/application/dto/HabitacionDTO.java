@@ -1,7 +1,6 @@
 package org.booking.com.application.dto;
 
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 

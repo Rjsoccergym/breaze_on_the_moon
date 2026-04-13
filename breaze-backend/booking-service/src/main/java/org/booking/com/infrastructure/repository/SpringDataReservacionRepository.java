@@ -1,16 +1,13 @@
-package org.booking.com.domain.repository;
+package org.booking.com.infrastructure.repository;
 
 import org.booking.com.domain.entity.Reservacion;
 import org.booking.com.domain.enums.EstadoReserva;
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public interface IReservacionRepository {
-
-    Reservacion save(Reservacion reservacion);
-
-    Optional<Reservacion> findById(UUID id);
+public interface SpringDataReservacionRepository extends JpaRepository<Reservacion, UUID> {
 
     List<Reservacion> findByEstado(EstadoReserva estado);
 
@@ -20,3 +17,4 @@ public interface IReservacionRepository {
 
     boolean existsByHabitacionIdAndEstado(UUID habitacionId, EstadoReserva estado);
 }
+

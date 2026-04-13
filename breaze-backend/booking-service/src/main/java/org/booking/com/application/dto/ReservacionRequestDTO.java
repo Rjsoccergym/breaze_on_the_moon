@@ -3,7 +3,6 @@ package org.booking.com.application.dto;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import lombok.Data;
-
 import java.time.LocalDate;
 import java.util.UUID;
 
