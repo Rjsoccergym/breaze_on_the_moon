@@ -1,5 +1,5 @@
 server:
-  port: 8081 # Cada micro tendrá su puerto (8081 Auth, 8082 Rooms, 8083 Booking)
+  port: 8081
 
 spring:
   application:
@@ -9,9 +9,11 @@ spring:
       write-dates-as-timestamps: false
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    # Agregamos :localhost, :5432, etc. como salvavidas
+    url: jdbc:postgresql://${DB_HOST:postgres-db}:${DB_PORT:5432}/${DB_NAME:auth_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -31,11 +33,10 @@ springdoc:
       - name: Auth Service API
         url: /openapi/auth-service.yml
 
-# Configuración personalizada para tu JwtService
 jwt:
-  secret: ${JWT_SECRET}
-  expiration: 3600000 # 1 hora en milisegundos
+  secret: ${JWT_SECRET:mi_clave_secreta_super_segura_123456}
+  expiration: 3600000 
 
 app:
-  # Por defecto, la auditoría sale por el API Gateway.
-  auditoria-url: ${AUDITORIA_URL:http://localhost:8080/internal/audits}
+  # Cambiamos a APP_AUDITORIA_URL para que coincida con Docker
+  auditoria-url: ${APP_AUDITORIA_URL:https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits}
