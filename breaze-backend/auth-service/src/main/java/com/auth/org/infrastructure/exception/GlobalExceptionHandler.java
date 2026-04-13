@@ -52,11 +52,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGenericException(Exception ex) {
+        System.err.println("[ERROR HANDLER] Excepción capturada: " + ex.getClass().getSimpleName() + " - " + ex.getMessage());
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "status", 500,
                         "error", "Internal Server Error",
-                        "message", "Ocurrió un error inesperado"
+                        "message", ex.getMessage() != null ? ex.getMessage() : "Ocurrió un error inesperado"
                 ));
     }
 }

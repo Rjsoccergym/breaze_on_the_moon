@@ -10,19 +10,19 @@ spring:
       routes:
         # Microservicio de Autenticación
         - id: auth-service
-          uri: http://localhost:8081 # URL directa del micro de Auth
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
           predicates:
             - Path=/api/v1/auth/**
 
         # Microservicio de Habitaciones (Room Service)
         - id: room-service
-          uri: http://localhost:8082 # URL directa del micro de Rooms
+          uri: ${ROOM_SERVICE_URL:http://room-service:8082}
           predicates:
             - Path=/api/v1/room/**
 
         # Microservicio de Reservas (Booking Service)
         - id: booking-service
-          uri: http://localhost:8083 # URL directa del micro de Bookings
+          uri: ${BOOKING_SERVICE_URL:http://booking-service:8083}
           predicates:
             - Path=/api/v1/booking/**
 
