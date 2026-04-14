@@ -128,3 +128,4 @@ volumes:
   auth-postgres-data:
   room-postgres-data:
   booking-postgres-data:
+  
