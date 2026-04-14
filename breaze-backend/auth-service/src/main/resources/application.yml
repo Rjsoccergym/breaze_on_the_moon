@@ -37,5 +37,4 @@ jwt:
   expiration: 3600000 # 1 hora en milisegundos
 
 app:
-  # Por defecto, la auditoría sale por el API Gateway.
-  auditoria-url: ${AUDITORIA_URL:http://localhost:8080/internal/audits}
+  auditoria-lambda-url: ${AUDITORIA_LAMBDA_URL}

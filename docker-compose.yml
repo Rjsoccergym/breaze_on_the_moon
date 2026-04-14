@@ -21,7 +21,7 @@ services:
     ports:
       - "8081:8080"
     env_file:
-      - ./breaze-backend/api-gateway/.env
+      - ./breaze-backend/api-gateway/src/main/resources/.env
     networks:
       - breaze-net
     depends_on:
@@ -34,13 +34,18 @@ services:
     image: postgres:16-alpine
     container_name: breaze-auth-postgres
     ports:
-      - "5432:5432"
+      - "${AUTH_DB_PORT}:5432"
     environment:
       - POSTGRES_DB=${AUTH_DB_NAME}
       - POSTGRES_USER=${AUTH_DB_USER}
       - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
     volumes:
       - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - breaze-net
 
@@ -52,25 +57,30 @@ services:
         MODULE_NAME: auth-service
     container_name: breaze-auth-service
     env_file:
-      - ./breaze-backend/auth-service/.env
-      - ./breaze-backend/auth-service/.env.db
+      - ./breaze-backend/auth-service/src/main/resources/.env
     networks:
       - breaze-net
     depends_on:
-      - auth-postgres
+      auth-postgres:
+        condition: service_healthy
 
   # 5. ROOM DB
   room-postgres:
     image: postgres:16-alpine
     container_name: breaze-room-postgres
     ports:
-      - "5433:5432"
+      - "${ROOM_DB_PORT}:5432"
     environment:
       - POSTGRES_DB=${ROOM_DB_NAME}
       - POSTGRES_USER=${ROOM_DB_USER}
       - POSTGRES_PASSWORD=${ROOM_DB_PASSWORD}
     volumes:
       - room-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ROOM_DB_USER} -d ${ROOM_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - breaze-net
 
@@ -82,25 +92,30 @@ services:
         MODULE_NAME: room-service
     container_name: breaze-room-service
     env_file:
-      - ./breaze-backend/room-service/.env
-      - ./breaze-backend/room-service/.env.db
+      - ./breaze-backend/room-service/src/main/resources/.env
     networks:
       - breaze-net
     depends_on:
-      - room-postgres
+      room-postgres:
+        condition: service_healthy
 
   # 7. BOOKING DB
   booking-postgres:
     image: postgres:16-alpine
     container_name: breaze-booking-postgres
     ports:
-      - "5434:5432"
+      - "${BOOKING_DB_PORT}:5432"
     environment:
       - POSTGRES_DB=${BOOKING_DB_NAME}
       - POSTGRES_USER=${BOOKING_DB_USER}
       - POSTGRES_PASSWORD=${BOOKING_DB_PASSWORD}
     volumes:
       - booking-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BOOKING_DB_USER} -d ${BOOKING_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - breaze-net
 
@@ -112,13 +127,14 @@ services:
         MODULE_NAME: booking-service
     container_name: breaze-booking-service
     env_file:
-      - ./breaze-backend/booking-service/.env
-      - ./breaze-backend/booking-service/.env.db
+      - ./breaze-backend/booking-service/src/main/resources/.env
     networks:
       - breaze-net
     depends_on:
-      - booking-postgres
-      - room-service
+      booking-postgres:
+        condition: service_healthy
+      room-service:
+        condition: service_started
 
 networks:
   breaze-net:

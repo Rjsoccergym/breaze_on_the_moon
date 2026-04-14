@@ -24,5 +24,4 @@ services:
     url: ${ROOM_SERVICE_URL:http://localhost:8082}
 
 app:
-  # Por defecto, la auditoría sale por el API Gateway.
-  auditoria-url: ${AUDITORIA_URL:http://localhost:8080/internal/audits}
+  auditoria-lambda-url: ${AUDITORIA_LAMBDA_URL}

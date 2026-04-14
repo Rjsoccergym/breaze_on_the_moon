@@ -22,7 +22,7 @@ public class EventPublisherAdapter implements IEventPublisherPort {
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.auditoria-url}")
+    @Value("${app.auditoria-lambda-url}")
     private String lambdaUrl;
 
     @Async
