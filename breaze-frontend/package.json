@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-api": "openapi -i ./swagger.yaml -o ./src/api-client -c axios"
+    "generate-api": "npx openapi-typescript-codegen --input ./swagger.yaml --output ./src/api-client --client axios"
   },
   "dependencies": {
     "axios": "^1.15.0",

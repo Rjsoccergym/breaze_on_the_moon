@@ -42,8 +42,16 @@ public class AuthService {
 
             return AuthResponseDTO.builder()
                     .token(token)
+                    .userId(persona.getId())
                     .username(persona.getUsername())
+                    .nombre(persona.getNombre())
+                    .apellido(persona.getApellido())
+                    .email(persona.getEmail())
                     .rol(persona.getRol() != null ? persona.getRol().name() : "CLIENT")
+                    .tipoIdentificacion(persona.getTipoIdentificacion())
+                    .numeroIdentificacion(persona.getNumeroIdentificacion())
+                    .telefono(persona.getTelefono())
+                    .fechaNacimiento(persona.getFechaNacimiento())
                     .mensaje("Bienvenido " + persona.getNombre())
                     .build();
         } catch (InvalidCredentialsException e) {
@@ -69,16 +77,36 @@ public class AuthService {
         if (personaRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new UserAlreadyExistsException("El nombre de usuario ya existe");
         }
+        if (personaRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException("El correo electrónico ya está registrado");
+        }
+        if (request.getNumeroIdentificacion() != null
+                && !request.getNumeroIdentificacion().isBlank()
+                && personaRepository.findByNumeroIdentificacion(request.getNumeroIdentificacion().trim()).isPresent()) {
+            throw new UserAlreadyExistsException("El número de identificación ya está registrado");
+        }
 
         Persona persona = (rol.equals(Rol.CLIENT)) ? new Cliente() : new Administrador();
-        persona.setUsername(request.getUsername());
-        persona.setEmail(request.getEmail());
-        persona.setNombre(request.getNombre());
-        persona.setApellido(request.getApellido());
+        persona.setUsername(request.getUsername().trim());
+        persona.setEmail(request.getEmail().trim());
+        persona.setNombre(request.getNombre().trim());
+        persona.setApellido(request.getApellido().trim());
         persona.setPassword(codificador.codificar(request.getPassword()));
+        persona.setTipoIdentificacion(request.getTipoIdentificacion());
+        persona.setNumeroIdentificacion(normalize(request.getNumeroIdentificacion()));
+        persona.setTelefono(normalize(request.getTelefono()));
+        persona.setFechaNacimiento(request.getFechaNacimiento());
         persona.setRol(rol);
 
         personaRepository.save(persona);
         eventPublisher.notificarEvento("REGISTER", "Nuevo usuario: " + persona.getUsername());
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

@@ -5,14 +5,14 @@ import com.room.org.application.dto.HabitacionResponseDTO;
 import com.room.org.application.port.IEventPublisherPort;
 import com.room.org.domain.entity.Habitacion;
 import com.room.org.domain.enums.EstadoHabitacion;
+import com.room.org.domain.exception.DomainException;
+import com.room.org.domain.exception.HabitacionAlreadyExistsException;
 import com.room.org.domain.exception.HabitacionNotFoundException;
 import com.room.org.domain.exception.UnauthorizedActionException;
 import com.room.org.domain.repository.IHabitacionRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +38,7 @@ public class HabitacionService {
         nueva.setPrecioNoche(dto.getPrecioNoche());
         nueva.setEstado(EstadoHabitacion.DISPONIBLE);
 
-        Habitacion guardada = habitacionRepository.save(nueva);
+        Habitacion guardada = habitacionRepository.saveAndFlush(nueva);
         eventPublisher.notificarEvento("HABITACION_CREADA", guardada.getNumeroIdentificador());
         return mapToResponse(guardada);
     }
@@ -93,7 +93,7 @@ public class HabitacionService {
         habitacion.setCapacidadMaxima(dto.getCapacidadMaxima());
         habitacion.setPrecioNoche(dto.getPrecioNoche());
 
-        Habitacion guardada = habitacionRepository.save(habitacion);
+        Habitacion guardada = habitacionRepository.saveAndFlush(habitacion);
         eventPublisher.notificarEvento("HABITACION_ACTUALIZADA", guardada.getNumeroIdentificador());
         return mapToResponse(guardada);
     }
@@ -102,7 +102,7 @@ public class HabitacionService {
     public void cambiarEstado(UUID id, EstadoHabitacion nuevoEstado) {
         Habitacion habitacion = buscarHabitacion(id);
         habitacion.setEstado(nuevoEstado);
-        habitacionRepository.save(habitacion);
+        habitacionRepository.saveAndFlush(habitacion);
         eventPublisher.notificarEvento("ESTADO_CAMBIADO", habitacion.getNumeroIdentificador());
     }
 
@@ -119,7 +119,7 @@ public class HabitacionService {
                 : habitacionRepository.existsByNumeroIdentificadorAndIdNot(numeroNormalizado, idActual);
 
         if (yaExiste) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new HabitacionAlreadyExistsException(
                     "Ya existe una habitación registrada con el número identificador " + numeroNormalizado);
         }
     }
@@ -128,7 +128,7 @@ public class HabitacionService {
         try {
             return EstadoHabitacion.valueOf(estado.trim().replace(" ", "_").toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido: " + estado);
+            throw new DomainException("Estado inválido: " + estado);
         }
     }
 
@@ -141,6 +141,8 @@ public class HabitacionService {
         response.setCapacidadMaxima(habitacion.getCapacidadMaxima());
         response.setPrecioNoche(habitacion.getPrecioNoche());
         response.setEstado(habitacion.getEstado());
+        response.setCreatedAt(habitacion.getCreatedAt());
+        response.setUpdatedAt(habitacion.getUpdatedAt());
         return response;
     }
 }

@@ -28,9 +28,11 @@ spring:
 
         # Canal interno de auditoría hacia Lambda (enricha y persiste en MongoDB)
         - id: audit-lambda
-          uri: ${AUDITORIA_LAMBDA_URL}
+          uri: ${AUDITORIA_LAMBDA_BASE_URL}
           predicates:
             - Path=/internal/audits
+          filters:
+            - SetPath=${AUDITORIA_LAMBDA_PATH:/default/breaze_in_the_moon_audits}
 
       # Configuración de CORS centralizada (Vital si vas a conectar un Frontend o App)
       globalcors:
@@ -49,3 +51,6 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000 # 1 hora en milisegundos
+
+internal:
+  shared-secret: ${INTERNAL_SHARED_SECRET}

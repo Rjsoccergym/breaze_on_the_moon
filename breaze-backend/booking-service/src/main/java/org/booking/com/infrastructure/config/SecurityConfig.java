@@ -13,13 +13,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final RequestIdentityFilter requestIdentityFilter;
+
+    public SecurityConfig(RequestIdentityFilter requestIdentityFilter) {
+        this.requestIdentityFilter = requestIdentityFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .addFilterBefore(new RequestIdentityFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestIdentityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }

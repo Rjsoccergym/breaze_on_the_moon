@@ -23,6 +23,11 @@ public class HabitacionRepositoryAdapter implements IHabitacionRepository {
     }
 
     @Override
+    public Habitacion saveAndFlush(Habitacion habitacion) {
+        return repository.saveAndFlush(habitacion);
+    }
+
+    @Override
     public Optional<Habitacion> findById(UUID id) {
         return repository.findById(id);
     }

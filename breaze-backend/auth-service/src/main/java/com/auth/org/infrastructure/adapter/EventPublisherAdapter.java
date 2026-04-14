@@ -20,11 +20,15 @@ import java.util.Map;
 public class EventPublisherAdapter implements IEventPublisherPort {
 
     private static final String INTERNAL_SERVICE_HEADER = "X-Internal-Service";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.auditoria-lambda-url}")
-    private String lambdaUrl;
+    @Value("${app.auditoria-url}")
+    private String auditUrl;
+
+    @Value("${internal.shared-secret}")
+    private String internalSharedSecret;
 
     @Async
     @Override
@@ -39,7 +43,8 @@ public class EventPublisherAdapter implements IEventPublisherPort {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set(INTERNAL_SERVICE_HEADER, "auth-service");
-            restTemplate.postForEntity(lambdaUrl, new HttpEntity<>(payload, headers), String.class);
+            headers.set(INTERNAL_SECRET_HEADER, internalSharedSecret);
+            restTemplate.postForEntity(auditUrl, new HttpEntity<>(payload, headers), String.class);
             log.info("[AUDITORIA] Evento {} enviado exitosamente a Lambda", tipo);
         } catch (Exception e) {
             log.error("[AUDITORIA] Error al notificar evento {}: {}", tipo, e.getMessage(), e);

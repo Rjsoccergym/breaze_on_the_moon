@@ -24,4 +24,7 @@ services:
     url: ${ROOM_SERVICE_URL:http://localhost:8082}
 
 app:
-  auditoria-lambda-url: ${AUDITORIA_LAMBDA_URL}
+  auditoria-url: ${AUDITORIA_URL}
+
+internal:
+  shared-secret: ${INTERNAL_SHARED_SECRET}

@@ -34,6 +34,10 @@ const Login: React.FC = () => {
   const [regApellido, setRegApellido] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
+  const [regTipoIdentificacion, setRegTipoIdentificacion] = useState('');
+  const [regNumeroIdentificacion, setRegNumeroIdentificacion] = useState('');
+  const [regTelefono, setRegTelefono] = useState('');
+  const [regFechaNacimiento, setRegFechaNacimiento] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
 
@@ -102,11 +106,16 @@ const Login: React.FC = () => {
         apellido: regApellido.trim(),
         username: regUsername.trim(),
         email: regEmail.trim(),
+        tipoIdentificacion: regTipoIdentificacion || undefined,
+        numeroIdentificacion: regNumeroIdentificacion.trim() || undefined,
+        telefono: regTelefono.trim() || undefined,
+        fechaNacimiento: regFechaNacimiento || undefined,
         password: regPassword,
       });
       setSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
       setRegNombre(''); setRegApellido(''); setRegUsername('');
-      setRegEmail(''); setRegPassword(''); setRegConfirm('');
+      setRegEmail(''); setRegTipoIdentificacion(''); setRegNumeroIdentificacion('');
+      setRegTelefono(''); setRegFechaNacimiento(''); setRegPassword(''); setRegConfirm('');
       setTimeout(() => switchView('login'), 1800);
     } catch (err: any) {
       if (!err.response) {
@@ -232,6 +241,31 @@ const Login: React.FC = () => {
             <div>
               <label style={labelStyle}>Correo electrónico</label>
               <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} required placeholder="correo@ejemplo.com" style={inputStyle} />
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Tipo de identificación</label>
+                <select value={regTipoIdentificacion} onChange={(e) => setRegTipoIdentificacion(e.target.value)} style={inputStyle}>
+                  <option value="">Seleccionar</option>
+                  <option value="CC">CC</option>
+                  <option value="TI">TI</option>
+                  <option value="NIT">NIT</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Número de identificación</label>
+                <input type="text" value={regNumeroIdentificacion} onChange={(e) => setRegNumeroIdentificacion(e.target.value)} placeholder="123456789" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Teléfono</label>
+                <input type="tel" value={regTelefono} onChange={(e) => setRegTelefono(e.target.value)} placeholder="3001234567" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Fecha de nacimiento</label>
+                <input type="date" value={regFechaNacimiento} onChange={(e) => setRegFechaNacimiento(e.target.value)} style={inputStyle} />
+              </div>
             </div>
             <div>
               <label style={labelStyle}>Contraseña <span style={{ color: '#9ca3af', fontWeight: 'normal' }}>(mín. 8 caracteres)</span></label>

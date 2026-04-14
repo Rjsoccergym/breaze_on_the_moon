@@ -11,8 +11,10 @@ info:
 servers:
   - url: "http://api.breazeinthemoon.com"
     description: "API Gateway (Producción)"
+  - url: "http://localhost:8081"
+    description: "API Gateway (Desarrollo Local con Docker Compose)"
   - url: "http://localhost:8080"
-    description: "API Gateway (Desarrollo Local)"
+    description: "API Gateway (Desarrollo Local ejecutado fuera de Docker)"
 
 paths:
   # ─── ROOM SERVICE ────────────────────────────────────────────────────────────
@@ -245,9 +247,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Booking'
         '400':
-          description: "Datos de entrada inválidos."
-        '409':
-          description: "La habitación no está disponible."
+          description: "Datos de entrada inválidos, fechas incorrectas o habitación no disponible."
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -409,13 +409,14 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: |
-        El API Gateway (puerto 8080) valida la firma del JWT y rechaza tokens
+        El API Gateway valida la firma del JWT y rechaza tokens
         inválidos con 401. Si el token es válido, propaga la identidad del usuario
         a los microservicios mediante los headers internos:
           - X-Authenticated-User: nombre de usuario
           - X-Authenticated-Role: rol (ADMIN o CLIENT)
           - X-Authenticated-User-Id: UUID del usuario
-        Los microservicios confían en estos headers sin re-validar el JWT.
+        Para tráfico interno entre servicios también se utiliza un canal confiable
+        con headers internos controlados por la plataforma.
 
   responses:
     Unauthorized:
@@ -448,6 +449,12 @@ components:
         estado:
           type: string
           enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     RoomInput:
       type: object
@@ -507,6 +514,12 @@ components:
         estado:
           type: string
           enum: [CREADA, CONFIRMADA, CANCELADA]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     BookingInput:
       type: object
@@ -558,6 +571,16 @@ components:
         email:
           type: string
           format: email
+        tipoIdentificacion:
+          type: string
+          enum: [CC, TI, NIT]
+        numeroIdentificacion:
+          type: string
+        telefono:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
 
     AuthResponse:
       type: object
@@ -565,11 +588,31 @@ components:
         token:
           type: string
           description: "JWT de acceso."
+        userId:
+          type: string
+          format: uuid
         username:
           type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        email:
+          type: string
+          format: email
         rol:
           type: string
           enum: [ADMIN, CLIENT]
+        tipoIdentificacion:
+          type: string
+          enum: [CC, TI, NIT]
+        numeroIdentificacion:
+          type: string
+        telefono:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
         mensaje:
           type: string
 

@@ -10,6 +10,8 @@ public interface IReservacionRepository {
 
     Reservacion save(Reservacion reservacion);
 
+    Reservacion saveAndFlush(Reservacion reservacion);
+
     Optional<Reservacion> findById(UUID id);
 
     List<Reservacion> findByEstado(EstadoReserva estado);

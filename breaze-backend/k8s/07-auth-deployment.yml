@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: secret-auth
                   key: JWT_SECRET
+            - name: INTERNAL_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-auth
+                  key: INTERNAL_SHARED_SECRET
             - name: AUDITORIA_URL
               valueFrom:
                 secretKeyRef:
