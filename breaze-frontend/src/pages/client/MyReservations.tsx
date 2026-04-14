@@ -20,7 +20,7 @@ const getErrorMessage = (error: unknown) => {
 };
 
 const bookingStatusLabel: Record<Booking.estado, string> = {
-  [Booking.estado.CREADA]: 'Creada',
+  [Booking.estado.RESERVADA]: 'Reservada',
   [Booking.estado.CONFIRMADA]: 'Confirmada',
   [Booking.estado.CANCELADA]: 'Cancelada',
 };
@@ -116,7 +116,7 @@ const MyReservations: React.FC = () => {
 
   const getStatusColor = (status?: Booking.estado) => {
     switch (status) {
-      case Booking.estado.CREADA: return { bg: '#eef2ff', text: '#003366' };
+      case Booking.estado.RESERVADA: return { bg: '#eef2ff', text: '#003366' };
       case Booking.estado.CANCELADA: return { bg: '#fee2e2', text: '#991b1b' };
       case Booking.estado.CONFIRMADA: return { bg: '#dcfce7', text: '#166534' };
       default: return { bg: '#f3f4f6', text: '#374151' };

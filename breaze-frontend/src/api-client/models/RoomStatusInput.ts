@@ -8,6 +8,7 @@ export type RoomStatusInput = {
 export namespace RoomStatusInput {
     export enum status {
         DISPONIBLE = 'DISPONIBLE',
+        RESERVADA = 'RESERVADA',
         OCUPADA = 'OCUPADA',
         MANTENIMIENTO = 'MANTENIMIENTO',
     }

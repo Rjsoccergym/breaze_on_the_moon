@@ -21,6 +21,7 @@ export namespace Room {
     }
     export enum estado {
         DISPONIBLE = 'DISPONIBLE',
+        RESERVADA = 'RESERVADA',
         OCUPADA = 'OCUPADA',
         MANTENIMIENTO = 'MANTENIMIENTO',
     }

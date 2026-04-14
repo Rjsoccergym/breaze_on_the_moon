@@ -23,7 +23,7 @@ data:
       DATE '2026-02-10',
       DATE '2026-02-13',
       795000.00,
-      'CREADA',
+      'RESERVADA',
       TIMESTAMP '2026-01-10 11:00:00',
       TIMESTAMP '2026-01-10 11:00:00'
     WHERE NOT EXISTS (

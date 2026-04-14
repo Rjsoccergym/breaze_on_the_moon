@@ -26,6 +26,7 @@ const roomTypeLabel: Record<Room.tipo, string> = {
 
 const roomStatusLabel: Record<Room.estado, string> = {
   [Room.estado.DISPONIBLE]: 'Disponible',
+  [Room.estado.RESERVADA]: 'Reservada',
   [Room.estado.OCUPADA]: 'Ocupada',
   [Room.estado.MANTENIMIENTO]: 'Mantenimiento',
 };
@@ -112,7 +113,7 @@ const Catalog: React.FC = () => {
         fechaFin: checkOut,
       });
 
-      setSuccess(`Reserva ${booking.id ?? ''} creada correctamente con estado ${booking.estado ?? 'CREADA'}.`);
+      setSuccess(`Reserva ${booking.id ?? ''} creada correctamente con estado ${booking.estado ?? 'RESERVADA'}.`);
       handleCloseModal();
       await loadRooms();
       navigate('/mis-reservas');

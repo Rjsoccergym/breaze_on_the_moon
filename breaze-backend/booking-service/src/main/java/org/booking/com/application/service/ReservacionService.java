@@ -47,9 +47,10 @@ public class ReservacionService {
         nueva.setFechaInicio(dto.getFechaInicio());
         nueva.setFechaFin(dto.getFechaFin());
         nueva.setMontoTotal(calcularMontoTotal(habitacion.getPrecioNoche(), dto));
-        nueva.setEstado(EstadoReserva.CREADA);
+        nueva.setEstado(EstadoReserva.RESERVADA);
 
         Reservacion guardada = repository.saveAndFlush(nueva);
+        habitacionCliente.actualizarEstadoHabitacion(guardada.getHabitacionId(), Map.of("status", "RESERVADA"));
         eventPublisher.notificarEvento("RESERVA_CREADA", guardada.getId().toString());
         return mapearAResponse(guardada);
     }

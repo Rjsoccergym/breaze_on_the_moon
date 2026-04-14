@@ -28,12 +28,13 @@ const roomTypeLabel: Record<Room.tipo, string> = {
 
 const roomStatusLabel: Record<Room.estado, string> = {
   [Room.estado.DISPONIBLE]: 'Disponible',
+  [Room.estado.RESERVADA]: 'Reservada',
   [Room.estado.OCUPADA]: 'Ocupada',
   [Room.estado.MANTENIMIENTO]: 'Mantenimiento',
 };
 
 const bookingStatusLabel: Record<Booking.estado, string> = {
-  [Booking.estado.CREADA]: 'Creada',
+  [Booking.estado.RESERVADA]: 'Reservada',
   [Booking.estado.CONFIRMADA]: 'Confirmada',
   [Booking.estado.CANCELADA]: 'Cancelada',
 };
@@ -47,7 +48,7 @@ const DashboardRooms: React.FC = () => {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [bookingFilter, setBookingFilter] = useState<Booking.estado>(Booking.estado.CREADA);
+  const [bookingFilter, setBookingFilter] = useState<Booking.estado>(Booking.estado.RESERVADA);
   const [updatingRoomId, setUpdatingRoomId] = useState<string | null>(null);
   const [bookingActionId, setBookingActionId] = useState<string | null>(null);
 
@@ -215,6 +216,7 @@ const DashboardRooms: React.FC = () => {
   const getStatusColor = (status?: Room.estado) => {
     switch (status) {
       case Room.estado.DISPONIBLE: return { bg: '#dcfce7', text: '#166534' };
+      case Room.estado.RESERVADA: return { bg: '#dbeafe', text: '#1d4ed8' };
       case Room.estado.OCUPADA: return { bg: '#fee2e2', text: '#991b1b' };
       case Room.estado.MANTENIMIENTO: return { bg: '#fef9c3', text: '#854d0e' };
       default: return { bg: '#f3f4f6', text: '#374151' };
@@ -223,7 +225,7 @@ const DashboardRooms: React.FC = () => {
 
   const getBookingStatusColor = (status?: Booking.estado) => {
     switch (status) {
-      case Booking.estado.CREADA: return { bg: '#eef2ff', text: '#003366' };
+      case Booking.estado.RESERVADA: return { bg: '#eef2ff', text: '#003366' };
       case Booking.estado.CONFIRMADA: return { bg: '#dcfce7', text: '#166534' };
       case Booking.estado.CANCELADA: return { bg: '#fee2e2', text: '#991b1b' };
       default: return { bg: '#f3f4f6', text: '#374151' };
@@ -233,6 +235,7 @@ const DashboardRooms: React.FC = () => {
   const roomCounts = {
     total: rooms.length,
     disponibles: rooms.filter((room) => room.estado === Room.estado.DISPONIBLE).length,
+    reservadas: rooms.filter((room) => room.estado === Room.estado.RESERVADA).length,
     ocupadas: rooms.filter((room) => room.estado === Room.estado.OCUPADA).length,
     mantenimiento: rooms.filter((room) => room.estado === Room.estado.MANTENIMIENTO).length,
   };
@@ -276,6 +279,10 @@ const DashboardRooms: React.FC = () => {
           <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '18px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Disponibles</p>
             <h3 style={{ margin: '10px 0 0 0', color: '#166534', fontSize: '28px' }}>{roomCounts.disponibles}</h3>
+          </div>
+          <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '18px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Reservadas</p>
+            <h3 style={{ margin: '10px 0 0 0', color: '#1d4ed8', fontSize: '28px' }}>{roomCounts.reservadas}</h3>
           </div>
           <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '18px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Ocupadas</p>
@@ -348,6 +355,7 @@ const DashboardRooms: React.FC = () => {
                           }}
                         >
                           <option value={RoomStatusInput.status.DISPONIBLE}>Marcar Disponible</option>
+                          <option value={RoomStatusInput.status.RESERVADA}>Marcar Reservada</option>
                           <option value={RoomStatusInput.status.OCUPADA}>Marcar Ocupada</option>
                           <option value={RoomStatusInput.status.MANTENIMIENTO}>A Mantenimiento</option>
                         </select>
@@ -367,7 +375,7 @@ const DashboardRooms: React.FC = () => {
               <p style={{ color: '#666', margin: 0 }}>Consulta reservas reales por estado y ejecuta acciones administrativas.</p>
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {[Booking.estado.CREADA, Booking.estado.CONFIRMADA, Booking.estado.CANCELADA].map((status) => (
+              {[Booking.estado.RESERVADA, Booking.estado.CONFIRMADA, Booking.estado.CANCELADA].map((status) => (
                 <button
                   key={status}
                   type="button"
@@ -426,7 +434,7 @@ const DashboardRooms: React.FC = () => {
                         </td>
                         <td style={{ padding: '16px' }}>
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {booking.estado === Booking.estado.CREADA && bookingId && (
+                            {booking.estado === Booking.estado.RESERVADA && bookingId && (
                               <button
                                 type="button"
                                 disabled={bookingActionId === bookingId}
