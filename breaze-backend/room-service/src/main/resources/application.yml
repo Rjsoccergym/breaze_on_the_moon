@@ -6,10 +6,9 @@ spring:
     name: room-service
 
   datasource:
-    # Añadidos los valores por defecto para evitar el Crash
-    url: jdbc:postgresql://${DB_HOST:postgres-db}:${DB_PORT:5432}/${DB_NAME:breaze_db}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -21,5 +20,5 @@ spring:
     show-sql: true
 
 app:
-  # Aseguramos que la auditoría apunte a tu Lambda si la variable falla
-  auditoria-url: ${AUDITORIA_URL:https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits}
+  # Por defecto, la auditoría sale por el API Gateway.
+  auditoria-url: ${AUDITORIA_URL:http://localhost:8080/internal/audits}

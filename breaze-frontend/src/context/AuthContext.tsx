@@ -5,7 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 // Esto debe coincidir con lo que el backend de Autenticación guarde en el token.
 interface DecodedToken {
   sub: string; // Usualmente el ID o correo del usuario
-  role: 'ADMIN' | 'CLIENT'; // Los roles estrictos que definimos en el Swagger
+  rol: 'ADMIN' | 'CLIENT'; // Claim emitido por el backend (campo 'rol', no 'role')
   exp: number; // Fecha de expiración
 }
 
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           logout();
         } else {
           setToken(storedToken);
-          setRole(decoded.role);
+          setRole(decoded.rol);
         }
       } catch (error) {
         // Si el token es inválido o está corrupto, lo limpiamos por seguridad
@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('breaze_token', newToken);
     const decoded = jwtDecode<DecodedToken>(newToken);
     setToken(newToken);
-    setRole(decoded.role);
+    setRole(decoded.rol);
   };
 
   // Función para cerrar sesión o cuando el token expira

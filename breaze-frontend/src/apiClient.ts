@@ -12,7 +12,7 @@ const apiClient = axios.create({
 // 2. Interceptor de Peticiones (Para enviar el Token JWT)
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('breaze_token');
     if (token) {
       // Inyectamos el token en la cabecera de todas las peticiones
       config.headers.Authorization = `Bearer ${token}`;

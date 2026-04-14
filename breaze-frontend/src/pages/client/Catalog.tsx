@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-interface Room {
-  id: string;
-  type: 'sencilla' | 'doble' | 'suite';
-  description: string;
-  maxCapacity: number;
-  pricePerNight: number;
-  status: string;
-}
+import { Room } from '../../api-client/models/Room';
 
 const Catalog: React.FC = () => {
   const navigate = useNavigate();
@@ -32,10 +24,10 @@ const Catalog: React.FC = () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 800)); 
         const mockData: Room[] = [
-          { id: '1', type: 'sencilla', description: 'Acogedora habitación con vista al jardín.', maxCapacity: 1, pricePerNight: 50.00, status: 'disponible' },
-          { id: '2', type: 'doble', description: 'Amplia habitación ideal para parejas, con balcón privado.', maxCapacity: 2, pricePerNight: 85.50, status: 'disponible' },
-          { id: '3', type: 'suite', description: 'Lujosa suite con sala de estar, jacuzzi y vista panorámica.', maxCapacity: 4, pricePerNight: 200.00, status: 'disponible' },
-          { id: '4', type: 'doble', description: 'Habitación doble estándar cerca de la piscina principal.', maxCapacity: 2, pricePerNight: 75.00, status: 'disponible' },
+          { id: '1', tipo: Room.tipo.SENCILLA, descripcion: 'Acogedora habitación con vista al jardín.', capacidadMax: 1, precionoche: 50.00, estado: Room.estado.DISPONIBLE },
+          { id: '2', tipo: Room.tipo.DOBLE, descripcion: 'Amplia habitación ideal para parejas, con balcón privado.', capacidadMax: 2, precionoche: 85.50, estado: Room.estado.DISPONIBLE },
+          { id: '3', tipo: Room.tipo.SUITE, descripcion: 'Lujosa suite con sala de estar, jacuzzi y vista panorámica.', capacidadMax: 4, precionoche: 200.00, estado: Room.estado.DISPONIBLE },
+          { id: '4', tipo: Room.tipo.DOBLE, descripcion: 'Habitación doble estándar cerca de la piscina principal.', capacidadMax: 2, precionoche: 75.00, estado: Room.estado.DISPONIBLE },
         ];
         setRooms(mockData);
       } catch (error) {
@@ -70,7 +62,7 @@ const Catalog: React.FC = () => {
       // Aquí enviarías el POST a tu API: await ReservationService.create({ roomId: selectedRoom.id, checkIn, checkOut })
       await new Promise((resolve) => setTimeout(resolve, 1200)); // Simulamos guardado
       
-      alert(`¡Reserva confirmada con éxito para la habitación ${selectedRoom?.type}!`);
+      alert(`¡Reserva confirmada con éxito para la habitación ${selectedRoom?.tipo}!`);
       handleCloseModal();
       navigate('/mis-reservas'); // Redirigimos al usuario para que vea su nueva reserva
       
@@ -118,17 +110,17 @@ const Catalog: React.FC = () => {
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span style={{ backgroundColor: '#eef2ff', color: '#003366', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                      {room.type}
+                      {room.tipo}
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', fontSize: '14px', color: '#666' }}>
-                      👤 Máx: {room.maxCapacity}
+                      👤 Máx: {room.capacidadMax}
                     </span>
                   </div>
-                  <p style={{ color: '#444', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px', flexGrow: 1 }}>{room.description}</p>
+                  <p style={{ color: '#444', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px', flexGrow: 1 }}>{room.descripcion}</p>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '15px' }}>
                     <div style={{ color: '#003366', fontSize: '20px', fontWeight: 'bold' }}>
-                      ${room.pricePerNight.toFixed(2)} <span style={{ fontSize: '12px', color: '#888', fontWeight: 'normal' }}>/ noche</span>
+                      ${room.precionoche?.toFixed(2)} <span style={{ fontSize: '12px', color: '#888', fontWeight: 'normal' }}>/ noche</span>
                     </div>
                     {/* Botón modificado para abrir el Modal */}
                     <button 
@@ -153,7 +145,7 @@ const Catalog: React.FC = () => {
           <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '8px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
             
             <h2 style={{ color: '#003366', margin: '0 0 15px 0' }}>Confirmar Reserva</h2>
-            <p style={{ color: '#444', marginBottom: '20px' }}>Estás a punto de reservar la <strong>Habitación {selectedRoom.type}</strong> a ${selectedRoom.pricePerNight} por noche.</p>
+            <p style={{ color: '#444', marginBottom: '20px' }}>Estás a punto de reservar la <strong>Habitación {selectedRoom.tipo}</strong> a ${selectedRoom.precionoche} por noche.</p>
             
             <form onSubmit={handleConfirmReservation} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>

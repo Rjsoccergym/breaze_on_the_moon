@@ -1,18 +1,5 @@
 services:
-  # --- LA BASE DE DATOS (Vital para que el resto funcione) ---
-  postgres-db:
-    image: postgres:15
-    container_name: breaze-db
-    environment:
-      - POSTGRES_DB=breaze_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    ports:
-      - "5432:5432"
-    networks:
-      - breaze-net
-
-  # --- FRONTEND ---
+  # 1. FRONTEND
   frontend:
     build:
       context: ./breaze-frontend
@@ -24,7 +11,7 @@ services:
     depends_on:
       - api-gateway
 
-  # --- API GATEWAY ---
+  # 2. API GATEWAY
   api-gateway:
     build:
       context: ./breaze-backend
@@ -33,67 +20,112 @@ services:
     container_name: breaze-api-gateway
     ports:
       - "8081:8080"
+    env_file:
+      - ./breaze-backend/api-gateway/.env
+    networks:
+      - breaze-net
+    depends_on:
+      - auth-service
+      - room-service
+      - booking-service
+
+  # 3. AUTH DB
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: breaze-auth-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${AUTH_DB_NAME}
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
     networks:
       - breaze-net
 
-  # --- AUTH-SERVICE (Microservicio de Autenticación) ---
+  # 4. AUTH SERVICE
   auth-service:
     build:
       context: ./breaze-backend
       args:
         MODULE_NAME: auth-service
     container_name: breaze-auth-service
-    environment:
-      - DB_HOST=postgres-db
-      - DB_PORT=5432
-      - DB_NAME=breaze_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - JWT_SECRET=mi_clave_secreta_123456
-      - AUDITORIA_URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
+    env_file:
+      - ./breaze-backend/auth-service/.env
+      - ./breaze-backend/auth-service/.env.db
+    networks:
+      - breaze-net
     depends_on:
-      - postgres-db
+      - auth-postgres
+
+  # 5. ROOM DB
+  room-postgres:
+    image: postgres:16-alpine
+    container_name: breaze-room-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=${ROOM_DB_NAME}
+      - POSTGRES_USER=${ROOM_DB_USER}
+      - POSTGRES_PASSWORD=${ROOM_DB_PASSWORD}
+    volumes:
+      - room-postgres-data:/var/lib/postgresql/data
     networks:
       - breaze-net
 
-  # --- ROOM-SERVICE (Donde creas las habitaciones) ---
+  # 6. ROOM SERVICE
   room-service:
     build:
       context: ./breaze-backend
       args:
         MODULE_NAME: room-service
     container_name: breaze-room-service
-    environment:
-      - DB_HOST=postgres-db
-      - DB_PORT=5432
-      - DB_NAME=breaze_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - AUDITORIA_URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
+    env_file:
+      - ./breaze-backend/room-service/.env
+      - ./breaze-backend/room-service/.env.db
+    networks:
+      - breaze-net
     depends_on:
-      - postgres-db
+      - room-postgres
+
+  # 7. BOOKING DB
+  booking-postgres:
+    image: postgres:16-alpine
+    container_name: breaze-booking-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=${BOOKING_DB_NAME}
+      - POSTGRES_USER=${BOOKING_DB_USER}
+      - POSTGRES_PASSWORD=${BOOKING_DB_PASSWORD}
+    volumes:
+      - booking-postgres-data:/var/lib/postgresql/data
     networks:
       - breaze-net
 
-  # --- BOOKING-SERVICE (Reservas) ---
+  # 8. BOOKING SERVICE
   booking-service:
     build:
       context: ./breaze-backend
       args:
         MODULE_NAME: booking-service
     container_name: breaze-booking-service
-    environment:
-      - DB_HOST=postgres-db
-      - DB_PORT=5432
-      - DB_NAME=breaze_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - AUDITORIA_URL=https://0m1tpn7om6.execute-api.us-east-1.amazonaws.com/default/breaze_in_the_moon_audits
-    depends_on:
-      - postgres-db
+    env_file:
+      - ./breaze-backend/booking-service/.env
+      - ./breaze-backend/booking-service/.env.db
     networks:
       - breaze-net
+    depends_on:
+      - booking-postgres
+      - room-service
 
 networks:
   breaze-net:
     driver: bridge
+
+volumes:
+  auth-postgres-data:
+  room-postgres-data:
+  booking-postgres-data:
+  

@@ -52,16 +52,6 @@ const App: React.FC = () => {
         
         {/* Rutas Protegidas (Cualquier usuario logueado) */}
 
-        <Route
-          path="/habitaciones"
-          element={
-            <ProtectedRoute>
-              <Catalog />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Rutas Protegidas (Cualquier usuario logueado) */}
         <Route 
           path="/habitaciones" 
           element={
