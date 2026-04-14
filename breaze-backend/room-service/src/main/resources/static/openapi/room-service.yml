@@ -6,8 +6,10 @@ info:
 servers:
   - url: "http://api.breazeinthemoon.com/api/v1/room"
     description: "API Gateway (Producción)"
-  - url: "http://localhost:8080/api/v1/room"
-    description: "API Gateway (Desarrollo Local)"
+  - url: "http://localhost:8081/api/v1/room"
+    description: "API Gateway (Desarrollo Local con Docker Compose)"
+  - url: "http://localhost:8082/api/v1/room"
+    description: "Room Service ejecutado directamente en desarrollo local"
 paths:
   /:
     get:
@@ -226,6 +228,14 @@ components:
           type: string
           enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
           description: "Situación actual de la habitación."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Fecha de creación del registro."
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Fecha de última actualización del registro."
     RoomInput:
       type: object
       description: "Objeto utilizado para crear o actualizar una habitación."

@@ -5,6 +5,7 @@ import com.room.org.domain.enums.TipoHabitacion;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -16,4 +17,6 @@ public class HabitacionResponseDTO {
     private Integer capacidadMaxima;
     private BigDecimal precioNoche;
     private EstadoHabitacion estado;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

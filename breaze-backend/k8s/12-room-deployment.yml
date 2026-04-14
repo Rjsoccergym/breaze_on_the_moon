@@ -38,6 +38,11 @@ spec:
                 secretKeyRef:
                   name: secret-room
                   key: DB_PASSWORD
+            - name: INTERNAL_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-room
+                  key: INTERNAL_SHARED_SECRET
             - name: AUDITORIA_URL
               valueFrom:
                 secretKeyRef:

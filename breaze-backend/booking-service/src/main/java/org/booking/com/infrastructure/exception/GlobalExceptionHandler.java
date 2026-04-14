@@ -2,12 +2,12 @@ package org.booking.com.infrastructure.exception;
 
 import org.booking.com.domain.exception.DomainException;
 import org.booking.com.domain.exception.ReservacionNotFoundException;
+import org.booking.com.domain.exception.UnauthorizedActionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -26,11 +26,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Regla de negocio inválida", "mensaje", ex.getMessage()));
     }
 
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, String>> handleStatus(ResponseStatusException ex) {
-        return ResponseEntity.status(ex.getStatusCode())
-                .body(Map.of("error", ex.getStatusCode().toString(),
-                        "mensaje", ex.getReason() == null ? "Solicitud inválida" : ex.getReason()));
+        @ExceptionHandler(UnauthorizedActionException.class)
+        public ResponseEntity<Map<String, String>> handleUnauthorized(UnauthorizedActionException ex) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(Map.of("error", "Acción no permitida", "mensaje", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

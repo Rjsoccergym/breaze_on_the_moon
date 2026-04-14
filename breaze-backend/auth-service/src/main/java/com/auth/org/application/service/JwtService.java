@@ -1,7 +1,6 @@
 package com.auth.org.application.service;
 
 import com.auth.org.domain.entity.Persona;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,14 +35,6 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
                 .compact();
-    }
-
-    public Claims extractClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
     }
 
     private SecretKey getSigningKey() {

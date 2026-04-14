@@ -1,5 +1,7 @@
 package com.room.org.infrastructure.exception;
 
+import com.room.org.domain.exception.DomainException;
+import com.room.org.domain.exception.ResourceConflictException;
 import com.room.org.domain.exception.ResourceNotFoundException;
 import com.room.org.domain.exception.UnauthorizedActionException;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,18 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<?> handleConflict(ResourceConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Conflicto", "mensaje", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<?> handleDomainException(DomainException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Regla de negocio inválida", "mensaje", ex.getMessage()));
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<?> handleNotFound(RuntimeException ex) {

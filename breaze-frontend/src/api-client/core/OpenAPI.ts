@@ -20,8 +20,8 @@ export type OpenAPIConfig = {
 };
 
 export const OpenAPI: OpenAPIConfig = {
-    BASE: 'http://api.breazeinthemoon.com/v1/rooms',
-    VERSION: '1.0.0',
+    BASE: 'http://api.breazeinthemoon.com',
+    VERSION: '1.1.0',
     WITH_CREDENTIALS: false,
     CREDENTIALS: 'include',
     TOKEN: undefined,

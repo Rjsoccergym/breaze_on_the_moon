@@ -2,51 +2,27 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * Entidad principal de Habitación.
- */
 export type Room = {
-    /**
-     * Número identificador único.
-     */
     id?: string;
-    /**
-     * Tipo de habitación.
-     */
+    numeroIdentificador?: string;
     tipo?: Room.tipo;
-    /**
-     * Descripción detallada.
-     */
     descripcion?: string;
-    /**
-     * Capacidad máxima de huéspedes.
-     */
-    capacidadMax?: number;
-    /**
-     * Precio por noche.
-     */
-    precionoche?: number;
-    /**
-     * Situación actual de la habitación.
-     */
+    capacidadMaxima?: number;
+    precioNoche?: number;
     estado?: Room.estado;
+    createdAt?: string;
+    updatedAt?: string;
 };
 export namespace Room {
-    /**
-     * Tipo de habitación.
-     */
     export enum tipo {
-        SENCILLA = 'sencilla',
-        DOBLE = 'doble',
-        SUITE = 'suite',
+        SENCILLA = 'SENCILLA',
+        DOBLE = 'DOBLE',
+        SUITE = 'SUITE',
     }
-    /**
-     * Situación actual de la habitación.
-     */
     export enum estado {
-        DISPONIBLE = 'disponible',
-        OCUPADA = 'ocupada',
-        EN_MANTENIMIENTO = 'en mantenimiento',
+        DISPONIBLE = 'DISPONIBLE',
+        OCUPADA = 'OCUPADA',
+        MANTENIMIENTO = 'MANTENIMIENTO',
     }
 }
 

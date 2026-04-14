@@ -7,7 +7,9 @@ servers:
   - url: "http://api.breazeinthemoon.com/api/v1/auth"
     description: "API Gateway (Producción)"
   - url: "http://localhost:8081/api/v1/auth"
-    description: "Servidor local de desarrollo"
+    description: "API Gateway (Desarrollo Local con Docker Compose)"
+  - url: "http://localhost:8081/api/v1/auth"
+    description: "Auth Service ejecutado directamente en desarrollo local"
 paths:
   /login:
     post:
@@ -117,19 +119,61 @@ components:
           type: string
           format: email
           description: "Correo electrónico válido."
+        tipoIdentificacion:
+          type: string
+          enum: [CC, TI, NIT]
+          description: "Tipo de identificación del usuario."
+        numeroIdentificacion:
+          type: string
+          description: "Número de identificación del usuario."
+        telefono:
+          type: string
+          description: "Teléfono de contacto del usuario."
+        fechaNacimiento:
+          type: string
+          format: date
+          description: "Fecha de nacimiento del usuario."
     AuthResponse:
       type: object
       properties:
         token:
           type: string
           description: "JWT de acceso."
+        userId:
+          type: string
+          format: uuid
+          description: "Identificador del usuario autenticado."
         username:
           type: string
           description: "Nombre de usuario autenticado."
+        nombre:
+          type: string
+          description: "Nombre del usuario autenticado."
+        apellido:
+          type: string
+          description: "Apellido del usuario autenticado."
+        email:
+          type: string
+          format: email
+          description: "Correo electrónico del usuario autenticado."
         rol:
           type: string
           enum: [ADMIN, CLIENT]
           description: "Rol asignado al usuario."
+        tipoIdentificacion:
+          type: string
+          enum: [CC, TI, NIT]
+          description: "Tipo de identificación del usuario."
+        numeroIdentificacion:
+          type: string
+          description: "Número de identificación del usuario."
+        telefono:
+          type: string
+          description: "Teléfono del usuario."
+        fechaNacimiento:
+          type: string
+          format: date
+          description: "Fecha de nacimiento del usuario."
         mensaje:
           type: string
           description: "Mensaje de bienvenida o información adicional."

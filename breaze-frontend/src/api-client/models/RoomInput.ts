@@ -2,20 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * Objeto utilizado para crear o actualizar una habitación.
- */
 export type RoomInput = {
+    numeroIdentificador: string;
     tipo: RoomInput.tipo;
     descripcion: string;
-    capacidadMax: number;
-    precionoche: number;
+    capacidadMaxima: number;
+    precioNoche: number;
 };
 export namespace RoomInput {
     export enum tipo {
-        SENCILLA = 'sencilla',
-        DOBLE = 'doble',
-        SUITE = 'suite',
+        SENCILLA = 'SENCILLA',
+        DOBLE = 'DOBLE',
+        SUITE = 'SUITE',
     }
 }
 

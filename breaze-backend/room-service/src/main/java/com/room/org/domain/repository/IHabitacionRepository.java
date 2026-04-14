@@ -11,6 +11,8 @@ public interface IHabitacionRepository {
 
     Habitacion save(Habitacion habitacion);
 
+    Habitacion saveAndFlush(Habitacion habitacion);
+
     Optional<Habitacion> findById(UUID id);
 
     List<Habitacion> findAll();

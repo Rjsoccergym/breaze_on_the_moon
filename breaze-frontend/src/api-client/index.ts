@@ -7,7 +7,16 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { AuthResponse } from './models/AuthResponse';
+export { Booking } from './models/Booking';
+export type { BookingInput } from './models/BookingInput';
+export type { LoginRequest } from './models/LoginRequest';
+export type { MessageResponse } from './models/MessageResponse';
+export { RegisterRequest } from './models/RegisterRequest';
 export { Room } from './models/Room';
 export { RoomInput } from './models/RoomInput';
+export { RoomStatusInput } from './models/RoomStatusInput';
 
-export { DefaultService } from './services/DefaultService';
+export { AuthService } from './services/AuthService';
+export { BookingsService } from './services/BookingsService';
+export { RoomsService } from './services/RoomsService';

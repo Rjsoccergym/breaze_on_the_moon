@@ -13,6 +13,8 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private static final String ROLE_HEADER = "X-Authenticated-Role";
     private static final String USER_ID_HEADER = "X-Authenticated-User-Id";
     private static final String INTERNAL_SERVICE_HEADER = "X-Internal-Service";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
     private static final String INTERNAL_AUDIT_PATH = "/internal/audits";
 
     private static final List<String> PUBLIC_PATHS = List.of(
@@ -40,19 +43,23 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${internal.shared-secret}")
+    private String internalSharedSecret;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+        ServerHttpRequest sanitizedRequest = sanitizeTrustedHeaders(exchange.getRequest());
 
         if (isPublicPath(path)) {
-            return chain.filter(exchange);
+            return chain.filter(exchange.mutate().request(sanitizedRequest).build());
         }
 
         if (isInternalAuditRequest(exchange, path)) {
             return chain.filter(exchange);
         }
 
-        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        String authHeader = sanitizedRequest.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(AUTHORIZATION_PREFIX)) {
             return onUnauthorized(exchange, "No se encontró token de acceso");
         }
@@ -66,11 +73,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+            ServerHttpRequest mutatedRequest = sanitizedRequest.mutate()
                     .headers(headers -> {
                         headers.remove(USER_HEADER);
                         headers.remove(ROLE_HEADER);
                         headers.remove(USER_ID_HEADER);
+                        headers.remove(INTERNAL_SERVICE_HEADER);
+                        headers.remove(INTERNAL_SECRET_HEADER);
                         headers.add(USER_HEADER, claims.getSubject());
                         headers.add(ROLE_HEADER, claims.get("rol", String.class));
 
@@ -101,7 +110,32 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             return false;
         }
         String internalService = exchange.getRequest().getHeaders().getFirst(INTERNAL_SERVICE_HEADER);
-        return internalService != null && ALLOWED_INTERNAL_SERVICES.contains(internalService);
+        String internalSecret = exchange.getRequest().getHeaders().getFirst(INTERNAL_SECRET_HEADER);
+        return internalService != null
+                && ALLOWED_INTERNAL_SERVICES.contains(internalService)
+                && isTrustedInternalSecret(internalSecret);
+    }
+
+    private ServerHttpRequest sanitizeTrustedHeaders(ServerHttpRequest request) {
+        return request.mutate()
+                .headers(headers -> {
+                    headers.remove(USER_HEADER);
+                    headers.remove(ROLE_HEADER);
+                    headers.remove(USER_ID_HEADER);
+                    headers.remove(INTERNAL_SERVICE_HEADER);
+                    headers.remove(INTERNAL_SECRET_HEADER);
+                })
+                .build();
+    }
+
+    private boolean isTrustedInternalSecret(String providedSecret) {
+        if (providedSecret == null || internalSharedSecret == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                providedSecret.getBytes(StandardCharsets.UTF_8),
+                internalSharedSecret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private Mono<Void> onUnauthorized(ServerWebExchange exchange, String message) {

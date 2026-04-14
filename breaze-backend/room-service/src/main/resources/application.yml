@@ -20,4 +20,7 @@ spring:
     show-sql: true
 
 app:
-  auditoria-lambda-url: ${AUDITORIA_LAMBDA_URL}
+  auditoria-url: ${AUDITORIA_URL}
+
+internal:
+  shared-secret: ${INTERNAL_SHARED_SECRET}

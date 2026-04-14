@@ -24,19 +24,24 @@ spec:
                 secretKeyRef:
                   name: secret-gateway
                   key: JWT_SECRET
-            - name: AUDITORIA_LAMBDA_URL
+            - name: INTERNAL_SHARED_SECRET
               valueFrom:
                 secretKeyRef:
                   name: secret-gateway
-                  key: AUDITORIA_LAMBDA_URL
-            - name: SPRING_CLOUD_GATEWAY_ROUTES_0_URI
-              value: http://auth-service
-            - name: SPRING_CLOUD_GATEWAY_ROUTES_1_URI
-              value: http://room-service
-            - name: SPRING_CLOUD_GATEWAY_ROUTES_2_URI
-              value: http://booking-service
-            - name: SPRING_CLOUD_GATEWAY_ROUTES_3_URI
+                  key: INTERNAL_SHARED_SECRET
+            - name: AUDITORIA_LAMBDA_BASE_URL
               valueFrom:
                 secretKeyRef:
                   name: secret-gateway
-                  key: AUDITORIA_LAMBDA_URL
+                  key: AUDITORIA_LAMBDA_BASE_URL
+            - name: AUDITORIA_LAMBDA_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: secret-gateway
+                  key: AUDITORIA_LAMBDA_PATH
+            - name: AUTH_SERVICE_URL
+              value: http://auth-service:8081
+            - name: ROOM_SERVICE_URL
+              value: http://room-service:8082
+            - name: BOOKING_SERVICE_URL
+              value: http://booking-service:8083

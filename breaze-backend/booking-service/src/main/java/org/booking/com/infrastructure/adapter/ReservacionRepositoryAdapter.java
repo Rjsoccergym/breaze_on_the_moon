@@ -23,6 +23,11 @@ public class ReservacionRepositoryAdapter implements IReservacionRepository {
     }
 
     @Override
+    public Reservacion saveAndFlush(Reservacion reservacion) {
+        return repository.saveAndFlush(reservacion);
+    }
+
+    @Override
     public Optional<Reservacion> findById(UUID id) {
         return repository.findById(id);
     }

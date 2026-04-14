@@ -38,6 +38,11 @@ spec:
                 secretKeyRef:
                   name: secret-booking
                   key: DB_PASSWORD
+            - name: INTERNAL_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-booking
+                  key: INTERNAL_SHARED_SECRET
             - name: ROOM_SERVICE_URL
               valueFrom:
                 secretKeyRef:
