@@ -1,9 +1,9 @@
 import axios from 'axios';
+import { API_BASE_PATH } from './config/api';
 
 // 1. Configuración de la instancia base
 const apiClient = axios.create({
-  // Puerto 8081 mapeado al API Gateway en Docker
-  baseURL: 'http://localhost:8081/api', 
+  baseURL: API_BASE_PATH,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
     // Si el backend nos dice que el token ya no es válido (401)
     if (error.response && error.response.status === 401) {
       console.error("Sesión expirada. Redirigiendo al login...");
-      localStorage.removeItem('token');
+      localStorage.removeItem('breaze_token');
       window.location.href = '/'; 
     }
     return Promise.reject(error);

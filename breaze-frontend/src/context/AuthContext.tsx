@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 // 1. Definimos la estructura de lo que viene dentro del Token (Payload)
@@ -6,6 +7,8 @@ import { jwtDecode } from 'jwt-decode';
 interface DecodedToken {
   sub: string; // Usualmente el ID o correo del usuario
   rol: 'ADMIN' | 'CLIENT'; // Claim emitido por el backend (campo 'rol', no 'role')
+  userId?: string;
+  nombre?: string;
   exp: number; // Fecha de expiración
 }
 
@@ -13,6 +16,9 @@ interface DecodedToken {
 interface AuthContextType {
   token: string | null;
   role: 'ADMIN' | 'CLIENT' | null;
+  userId: string | null;
+  username: string | null;
+  displayName: string | null;
   isAuthenticated: boolean;
   login: (newToken: string) => void;
   logout: () => void;
@@ -25,6 +31,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<'ADMIN' | 'CLIENT' | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  const applyDecodedToken = (jwt: string) => {
+    const decoded = jwtDecode<DecodedToken>(jwt);
+    setToken(jwt);
+    setRole(decoded.rol);
+    setUserId(decoded.userId ?? null);
+    setUsername(decoded.sub ?? null);
+    setDisplayName(decoded.nombre ?? null);
+  };
 
   // Efecto inicial: Buscar si ya hay un token guardado al recargar la página
   useEffect(() => {
@@ -36,8 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (decoded.exp * 1000 < Date.now()) {
           logout();
         } else {
-          setToken(storedToken);
-          setRole(decoded.rol);
+          applyDecodedToken(storedToken);
         }
       } catch (error) {
         // Si el token es inválido o está corrupto, lo limpiamos por seguridad
@@ -49,9 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Función para iniciar sesión (se llamará desde la pantalla Login.tsx)
   const login = (newToken: string) => {
     localStorage.setItem('breaze_token', newToken);
-    const decoded = jwtDecode<DecodedToken>(newToken);
-    setToken(newToken);
-    setRole(decoded.rol);
+    applyDecodedToken(newToken);
   };
 
   // Función para cerrar sesión o cuando el token expira
@@ -59,12 +74,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('breaze_token');
     setToken(null);
     setRole(null);
+    setUserId(null);
+    setUsername(null);
+    setDisplayName(null);
   };
 
   // Valores y funciones expuestos al resto de la aplicación
   const value = {
     token,
     role,
+    userId,
+    username,
+    displayName,
     isAuthenticated: !!token,
     login,
     logout,
