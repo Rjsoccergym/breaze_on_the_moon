@@ -1,78 +1,124 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Booking } from '../../api-client/models/Booking';
+import { Room } from '../../api-client/models/Room';
+import { BookingsService } from '../../api-client/services/BookingsService';
+import { RoomsService } from '../../api-client/services/RoomsService';
 
-
-// 1. Definimos la interfaz basada en tu Swagger
-interface Reservation {
-  id: string;
-  roomId: string;
-  roomType: string;
-  startDate: string;
-  endDate: string;
-  status: 'activa' | 'completada' | 'cancelada';
-  totalPrice: number;
-}
-
-const MyReservations: React.FC = () => {
-  const { token } = useAuth();
-  const navigate = useNavigate();
-  const { logout } = useAuth(); // Agregamos la función de cierre de sesión
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // 2. Simulamos la Consulta (GET)
-  useEffect(() => {
-    const fetchMyReservations = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 800)); // Simulamos latencia
-        
-        // Datos Mockeados
-        const mockData: Reservation[] = [
-          { id: 'RES-001', roomId: '3', roomType: 'Suite', startDate: '2026-05-10', endDate: '2026-05-15', status: 'activa', totalPrice: 1000.00 },
-          { id: 'RES-002', roomId: '1', roomType: 'Sencilla', startDate: '2026-04-01', endDate: '2026-04-03', status: 'completada', totalPrice: 100.00 },
-        ];
-        
-        setReservations(mockData);
-      } catch (error) {
-        console.error("Error al cargar reservas", error);
-      } finally {
-        setLoading(false);
-      }
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as {
+      body?: { message?: string; error?: string };
+      message?: string;
     };
 
-    fetchMyReservations();
-  }, []);
+    return apiError.body?.message ?? apiError.body?.error ?? apiError.message ?? 'No fue posible cargar la información.';
+  }
 
-  // 3. Simulamos la Cancelación (PATCH)
-  const handleCancel = async (reservationId: string) => {
-    // Confirmación nativa simple
-    const confirm = window.confirm('¿Estás seguro de que deseas cancelar esta reserva?');
-    if (!confirm) return;
+  return 'No fue posible cargar la información.';
+};
+
+const bookingStatusLabel: Record<Booking.estado, string> = {
+  [Booking.estado.CREADA]: 'Creada',
+  [Booking.estado.CONFIRMADA]: 'Confirmada',
+  [Booking.estado.CANCELADA]: 'Cancelada',
+};
+
+const roomTypeLabel: Record<Room.tipo, string> = {
+  [Room.tipo.SENCILLA]: 'Sencilla',
+  [Room.tipo.DOBLE]: 'Doble',
+  [Room.tipo.SUITE]: 'Suite',
+};
+
+const MyReservations: React.FC = () => {
+  const navigate = useNavigate();
+  const { logout, userId, displayName, role } = useAuth();
+  const [reservations, setReservations] = useState<Booking[]>([]);
+  const [roomsById, setRoomsById] = useState<Record<string, Room | null>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const loadReservations = async () => {
+    if (!userId) {
+      setReservations([]);
+      setRoomsById({});
+      setLoading(false);
+      setError('No fue posible resolver el usuario autenticado desde el token actual.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
 
     try {
-      // En la vida real: await ReservationService.cancelReservation(reservationId);
-      await new Promise((resolve) => setTimeout(resolve, 500)); 
-      
-      // Actualizamos el estado local para reflejar el cambio sin recargar la página
-      setReservations(prevReservations => 
-        prevReservations.map(res => 
-          res.id === reservationId ? { ...res, status: 'cancelada' } : res
-        )
-      );
-      
-      alert('Reserva cancelada exitosamente.');
-    } catch (error) {
-      alert('Hubo un error al cancelar la reserva.');
+      const data = await BookingsService.getApiV1BookingCliente(userId);
+      const sortedReservations = [...data].sort((left, right) => {
+        const rightDate = right.createdAt ?? right.fechaInicio ?? '';
+        const leftDate = left.createdAt ?? left.fechaInicio ?? '';
+        return rightDate.localeCompare(leftDate);
+      });
+      setReservations(sortedReservations);
+    } catch (fetchError) {
+      setError(getErrorMessage(fetchError));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Función auxiliar para los colores de las etiquetas de estado
-  const getStatusColor = (status: string) => {
+  useEffect(() => {
+    void loadReservations();
+  }, [userId]);
+
+  useEffect(() => {
+    const loadRooms = async () => {
+      const roomIds = [...new Set(reservations.map((reservation) => reservation.habitacionId).filter(Boolean))] as string[];
+      if (roomIds.length === 0) {
+        setRoomsById({});
+        return;
+      }
+
+      const entries = await Promise.all(roomIds.map(async (roomId) => {
+        try {
+          const room = await RoomsService.getApiV1Room1(roomId);
+          return [roomId, room] as const;
+        } catch {
+          return [roomId, null] as const;
+        }
+      }));
+
+      setRoomsById(Object.fromEntries(entries));
+    };
+
+    void loadRooms();
+  }, [reservations]);
+
+  const handleCancel = async (reservationId: string) => {
+    const confirm = window.confirm('¿Estás seguro de que deseas cancelar esta reserva?');
+    if (!confirm) return;
+
+    setMessage('');
+    setError('');
+    setCancellingId(reservationId);
+
+    try {
+      await BookingsService.deleteApiV1Booking(reservationId);
+      setMessage('Reserva cancelada correctamente.');
+      await loadReservations();
+    } catch (cancelError) {
+      setError(getErrorMessage(cancelError));
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const getStatusColor = (status?: Booking.estado) => {
     switch (status) {
-      case 'activa': return { bg: '#eef2ff', text: '#003366' }; // Azul institucional
-      case 'cancelada': return { bg: '#fee2e2', text: '#991b1b' }; // Rojo
-      case 'completada': return { bg: '#dcfce7', text: '#166534' }; // Verde
+      case Booking.estado.CREADA: return { bg: '#eef2ff', text: '#003366' };
+      case Booking.estado.CANCELADA: return { bg: '#fee2e2', text: '#991b1b' };
+      case Booking.estado.CONFIRMADA: return { bg: '#dcfce7', text: '#166534' };
       default: return { bg: '#f3f4f6', text: '#374151' };
     }
   };
@@ -81,8 +127,21 @@ const MyReservations: React.FC = () => {
     <div style={{ backgroundColor: '#f4f7f6', minHeight: '100vh', fontFamily: 'sans-serif' }}>
         {/* Barra de Navegación */}
       <nav style={{ backgroundColor: '#003366', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ color: '#FFD700', margin: 0 }}>Breaze in the Moon</h2>
+        <div>
+          <h2 style={{ color: '#FFD700', margin: 0 }}>Breaze in the Moon</h2>
+          <p style={{ color: '#dbeafe', margin: '4px 0 0 0', fontSize: '13px' }}>
+            {displayName ? `Reservas de ${displayName}` : 'Historial autenticado'}
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '15px' }}>
+          {role === 'ADMIN' && (
+            <button
+              onClick={() => navigate('/admin')}
+              style={{ backgroundColor: '#0f172a', color: '#fff', border: '1px solid #FFD700', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Panel Admin
+            </button>
+          )}
           <button 
             onClick={() => navigate('/habitaciones')}
             style={{ backgroundColor: '#FFD700', color: '#003366', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -101,42 +160,60 @@ const MyReservations: React.FC = () => {
         <h1 style={{ color: '#003366', marginBottom: '10px' }}>Mis Reservas</h1>
         <p style={{ color: '#666', marginBottom: '30px' }}>Consulta el historial y gestiona tus estadías actuales.</p>
 
+        {error && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '12px 14px', borderRadius: '6px', marginBottom: '20px' }}>
+            {error}
+          </div>
+        )}
+        {message && (
+          <div style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '12px 14px', borderRadius: '6px', marginBottom: '20px' }}>
+            {message}
+          </div>
+        )}
+
         {loading ? (
           <p style={{ textAlign: 'center', color: '#003366' }}>Cargando tus reservas...</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {reservations.map((res) => {
-              const statusColors = getStatusColor(res.status);
+              const room = res.habitacionId ? roomsById[res.habitacionId] : null;
+              const statusColors = getStatusColor(res.estado);
+              const reservationId = res.id;
               
               return (
-                <div key={res.id} style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={res.id} style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
                   
-                  {/* Detalles de la Reserva */}
                   <div>
                     <h3 style={{ margin: '0 0 8px 0', color: '#003366' }}>
-                      Habitación {res.roomType} <span style={{ fontSize: '14px', color: '#888', fontWeight: 'normal' }}>({res.id})</span>
+                      {room?.tipo ? `Habitación ${roomTypeLabel[room.tipo]}` : 'Reserva de habitación'}{' '}
+                      <span style={{ fontSize: '14px', color: '#888', fontWeight: 'normal' }}>({res.id})</span>
                     </h3>
                     <p style={{ margin: '0 0 4px 0', color: '#444', fontSize: '14px' }}>
-                      <strong>Fechas:</strong> {res.startDate} hasta {res.endDate}
+                      <strong>Habitación:</strong> {room?.numeroIdentificador ?? res.habitacionId}
                     </p>
-                    <p style={{ margin: '0', color: '#444', fontSize: '14px' }}>
-                      <strong>Total:</strong> ${res.totalPrice.toFixed(2)}
+                    <p style={{ margin: '0 0 4px 0', color: '#444', fontSize: '14px' }}>
+                      <strong>Fechas:</strong> {res.fechaInicio} hasta {res.fechaFin}
+                    </p>
+                    <p style={{ margin: '0 0 4px 0', color: '#444', fontSize: '14px' }}>
+                      <strong>Total:</strong> ${(res.precioTotal ?? 0).toFixed(2)}
+                    </p>
+                    <p style={{ margin: '0', color: '#64748b', fontSize: '13px' }}>
+                      <strong>Creada:</strong> {res.createdAt ? new Date(res.createdAt).toLocaleString() : 'Sin marca temporal'}
                     </p>
                   </div>
 
-                  {/* Estado y Acciones */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
                     <span style={{ backgroundColor: statusColors.bg, color: statusColors.text, padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                      {res.status}
+                      {res.estado ? bookingStatusLabel[res.estado] : 'Sin estado'}
                     </span>
                     
-                    {/* Solo mostramos el botón de cancelar si la reserva está activa */}
-                    {res.status === 'activa' && (
+                    {res.estado !== Booking.estado.CANCELADA && reservationId && (
                       <button 
-                        onClick={() => handleCancel(res.id)}
+                        onClick={() => handleCancel(reservationId)}
+                        disabled={cancellingId === reservationId}
                         style={{ backgroundColor: 'transparent', color: '#991b1b', border: '1px solid #991b1b', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                       >
-                        Cancelar Reserva
+                        {cancellingId === reservationId ? 'Cancelando...' : 'Cancelar Reserva'}
                       </button>
                     )}
                   </div>
@@ -146,7 +223,7 @@ const MyReservations: React.FC = () => {
             })}
             
             {reservations.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#666' }}>No tienes reservas en tu historial.</p>
+              <p style={{ textAlign: 'center', color: '#666' }}>No tienes reservas registradas en la base de datos.</p>
             )}
           </div>
         )}

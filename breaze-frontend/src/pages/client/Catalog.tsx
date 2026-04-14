@@ -1,14 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { BookingsService } from '../../api-client/services/BookingsService';
+import { RoomsService } from '../../api-client/services/RoomsService';
 import { Room } from '../../api-client/models/Room';
+
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as {
+      body?: { message?: string; error?: string };
+      message?: string;
+    };
+
+    return apiError.body?.message ?? apiError.body?.error ?? apiError.message ?? 'No fue posible completar la operación.';
+  }
+
+  return 'No fue posible completar la operación.';
+};
+
+const roomTypeLabel: Record<Room.tipo, string> = {
+  [Room.tipo.SENCILLA]: 'Sencilla',
+  [Room.tipo.DOBLE]: 'Doble',
+  [Room.tipo.SUITE]: 'Suite',
+};
+
+const roomStatusLabel: Record<Room.estado, string> = {
+  [Room.estado.DISPONIBLE]: 'Disponible',
+  [Room.estado.OCUPADA]: 'Ocupada',
+  [Room.estado.MANTENIMIENTO]: 'Mantenimiento',
+};
 
 const Catalog: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, displayName, role } = useAuth();
   
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // ==========================================
   // ESTADOS PARA EL MODAL DE RESERVA
@@ -19,30 +48,35 @@ const Catalog: React.FC = () => {
   const [checkOut, setCheckOut] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const loadRooms = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await RoomsService.getApiV1Room();
+      const sortedRooms = [...data].sort((left, right) => (left.numeroIdentificador ?? '').localeCompare(right.numeroIdentificador ?? ''));
+      setRooms(sortedRooms);
+    } catch (fetchError) {
+      setError(getErrorMessage(fetchError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 800)); 
-        const mockData: Room[] = [
-          { id: '1', tipo: Room.tipo.SENCILLA, descripcion: 'Acogedora habitación con vista al jardín.', capacidadMax: 1, precionoche: 50.00, estado: Room.estado.DISPONIBLE },
-          { id: '2', tipo: Room.tipo.DOBLE, descripcion: 'Amplia habitación ideal para parejas, con balcón privado.', capacidadMax: 2, precionoche: 85.50, estado: Room.estado.DISPONIBLE },
-          { id: '3', tipo: Room.tipo.SUITE, descripcion: 'Lujosa suite con sala de estar, jacuzzi y vista panorámica.', capacidadMax: 4, precionoche: 200.00, estado: Room.estado.DISPONIBLE },
-          { id: '4', tipo: Room.tipo.DOBLE, descripcion: 'Habitación doble estándar cerca de la piscina principal.', capacidadMax: 2, precionoche: 75.00, estado: Room.estado.DISPONIBLE },
-        ];
-        setRooms(mockData);
-      } catch (error) {
-        console.error("Error al cargar habitaciones", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRooms();
+    void loadRooms();
   }, []);
 
   // ==========================================
   // FUNCIONES DEL MODAL
   // ==========================================
   const handleOpenModal = (room: Room) => {
+    if (room.estado !== Room.estado.DISPONIBLE) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
     setSelectedRoom(room);
     setIsModalOpen(true);
   };
@@ -56,18 +90,34 @@ const Catalog: React.FC = () => {
 
   const handleConfirmReservation = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedRoom?.id) {
+      setError('No fue posible identificar la habitación seleccionada.');
+      return;
+    }
+
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+      setError('Selecciona un rango de fechas válido para registrar la reserva.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
     setIsSubmitting(true);
 
     try {
-      // Aquí enviarías el POST a tu API: await ReservationService.create({ roomId: selectedRoom.id, checkIn, checkOut })
-      await new Promise((resolve) => setTimeout(resolve, 1200)); // Simulamos guardado
-      
-      alert(`¡Reserva confirmada con éxito para la habitación ${selectedRoom?.tipo}!`);
+      const booking = await BookingsService.postApiV1Booking({
+        habitacionId: selectedRoom.id,
+        fechaInicio: checkIn,
+        fechaFin: checkOut,
+      });
+
+      setSuccess(`Reserva ${booking.id ?? ''} creada correctamente con estado ${booking.estado ?? 'CREADA'}.`);
       handleCloseModal();
-      navigate('/mis-reservas'); // Redirigimos al usuario para que vea su nueva reserva
-      
-    } catch (error) {
-      alert('Hubo un error al procesar tu reserva.');
+      await loadRooms();
+      navigate('/mis-reservas');
+    } catch (submitError) {
+      setError(getErrorMessage(submitError));
     } finally {
       setIsSubmitting(false);
     }
@@ -78,8 +128,21 @@ const Catalog: React.FC = () => {
       
       {/* Barra de Navegación */}
       <nav style={{ backgroundColor: '#003366', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ color: '#FFD700', margin: 0 }}>Breaze in the Moon</h2>
+        <div>
+          <h2 style={{ color: '#FFD700', margin: 0 }}>Breaze in the Moon</h2>
+          <p style={{ color: '#dbeafe', margin: '4px 0 0 0', fontSize: '13px' }}>
+            {displayName ? `Sesión: ${displayName}` : 'Sesión autenticada'}
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '15px' }}>
+          {role === 'ADMIN' && (
+            <button
+              onClick={() => navigate('/admin')}
+              style={{ backgroundColor: '#0f172a', color: '#fff', border: '1px solid #FFD700', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Panel Admin
+            </button>
+          )}
           <button 
             onClick={() => navigate('/mis-reservas')}
             style={{ backgroundColor: '#FFD700', color: '#003366', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -99,6 +162,17 @@ const Catalog: React.FC = () => {
         <h1 style={{ color: '#003366', marginBottom: '10px' }}>Habitaciones Disponibles</h1>
         <p style={{ color: '#666', marginBottom: '30px' }}>Encuentra el espacio perfecto para tu próxima estadía.</p>
 
+        {error && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '12px 14px', borderRadius: '6px', marginBottom: '20px' }}>
+            {error}
+          </div>
+        )}
+        {success && (
+          <div style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '12px 14px', borderRadius: '6px', marginBottom: '20px' }}>
+            {success}
+          </div>
+        )}
+
         {loading ? (
           <p style={{ textAlign: 'center', color: '#003366', fontSize: '18px' }}>Cargando catálogo...</p>
         ) : (
@@ -110,30 +184,37 @@ const Catalog: React.FC = () => {
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span style={{ backgroundColor: '#eef2ff', color: '#003366', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                      {room.tipo}
+                      {room.tipo ? roomTypeLabel[room.tipo] : 'Sin tipo'}
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', fontSize: '14px', color: '#666' }}>
-                      👤 Máx: {room.capacidadMax}
+                      👤 Máx: {room.capacidadMaxima ?? 0}
                     </span>
                   </div>
+                  <p style={{ margin: '0 0 10px 0', color: '#64748b', fontSize: '13px' }}>
+                    Habitación {room.numeroIdentificador ?? 'sin número'} · {room.estado ? roomStatusLabel[room.estado] : 'Sin estado'}
+                  </p>
                   <p style={{ color: '#444', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px', flexGrow: 1 }}>{room.descripcion}</p>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '15px' }}>
                     <div style={{ color: '#003366', fontSize: '20px', fontWeight: 'bold' }}>
-                      ${room.precionoche?.toFixed(2)} <span style={{ fontSize: '12px', color: '#888', fontWeight: 'normal' }}>/ noche</span>
+                      ${(room.precioNoche ?? 0).toFixed(2)} <span style={{ fontSize: '12px', color: '#888', fontWeight: 'normal' }}>/ noche</span>
                     </div>
-                    {/* Botón modificado para abrir el Modal */}
                     <button 
+                      disabled={room.estado !== Room.estado.DISPONIBLE}
                       onClick={() => handleOpenModal(room)}
-                      style={{ backgroundColor: '#FFD700', color: '#003366', border: 'none', padding: '10px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                      style={{ backgroundColor: room.estado === Room.estado.DISPONIBLE ? '#FFD700' : '#cbd5e1', color: '#003366', border: 'none', padding: '10px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: room.estado === Room.estado.DISPONIBLE ? 'pointer' : 'not-allowed' }}
                     >
-                      Reservar
+                      {room.estado === Room.estado.DISPONIBLE ? 'Reservar' : 'No disponible'}
                     </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        )}
+
+        {!loading && rooms.length === 0 && !error && (
+          <p style={{ textAlign: 'center', color: '#666' }}>No hay habitaciones visibles para el rol autenticado.</p>
         )}
       </main>
 
@@ -145,7 +226,10 @@ const Catalog: React.FC = () => {
           <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '8px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
             
             <h2 style={{ color: '#003366', margin: '0 0 15px 0' }}>Confirmar Reserva</h2>
-            <p style={{ color: '#444', marginBottom: '20px' }}>Estás a punto de reservar la <strong>Habitación {selectedRoom.tipo}</strong> a ${selectedRoom.precionoche} por noche.</p>
+            <p style={{ color: '#444', marginBottom: '20px' }}>
+              Estás a punto de registrar una reserva real para la habitación <strong>{selectedRoom.numeroIdentificador}</strong>
+              {' '}({selectedRoom.tipo ? roomTypeLabel[selectedRoom.tipo] : 'Sin tipo'}) a ${(selectedRoom.precioNoche ?? 0).toFixed(2)} por noche.
+            </p>
             
             <form onSubmit={handleConfirmReservation} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>

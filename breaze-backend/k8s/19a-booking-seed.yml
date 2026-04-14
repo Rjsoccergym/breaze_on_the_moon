@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-seed-sql
+  namespace: breaze
+data:
+  seed.sql: |
+    INSERT INTO reservas (
+      id,
+      habitacion_id,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+      monto_total,
+      estado,
+      created_at,
+      updated_at
+    )
+    SELECT
+      '44444444-4444-4444-4444-444444444441'::uuid,
+      '33333333-3333-3333-3333-333333333332'::uuid,
+      '22222222-2222-2222-2222-222222222222'::uuid,
+      DATE '2026-02-10',
+      DATE '2026-02-13',
+      795000.00,
+      'CREADA',
+      TIMESTAMP '2026-01-10 11:00:00',
+      TIMESTAMP '2026-01-10 11:00:00'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM reservas WHERE id = '44444444-4444-4444-4444-444444444441'::uuid
+    );
+
+    INSERT INTO reservas (
+      id,
+      habitacion_id,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+      monto_total,
+      estado,
+      created_at,
+      updated_at
+    )
+    SELECT
+      '44444444-4444-4444-4444-444444444442'::uuid,
+      '33333333-3333-3333-3333-333333333333'::uuid,
+      '22222222-2222-2222-2222-222222222222'::uuid,
+      DATE '2026-02-18',
+      DATE '2026-02-21',
+      1560000.00,
+      'CONFIRMADA',
+      TIMESTAMP '2026-01-10 11:10:00',
+      TIMESTAMP '2026-01-10 11:10:00'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM reservas WHERE id = '44444444-4444-4444-4444-444444444442'::uuid
+    );
+
+    INSERT INTO reservas (
+      id,
+      habitacion_id,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+      monto_total,
+      estado,
+      created_at,
+      updated_at
+    )
+    SELECT
+      '44444444-4444-4444-4444-444444444443'::uuid,
+      '33333333-3333-3333-3333-333333333334'::uuid,
+      '22222222-2222-2222-2222-222222222222'::uuid,
+      DATE '2026-01-22',
+      DATE '2026-01-24',
+      490000.00,
+      'CANCELADA',
+      TIMESTAMP '2026-01-10 11:20:00',
+      TIMESTAMP '2026-01-10 11:20:00'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM reservas WHERE id = '44444444-4444-4444-4444-444444444443'::uuid
+    );
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: booking-seed-job
+  namespace: breaze
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: booking-seed
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"; do
+                echo "Esperando a booking-postgres..."
+                sleep 5
+              done
+
+              until [ "$(psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -Atqc "SELECT to_regclass('public.reservas') IS NOT NULL;")" = "t" ]; do
+                echo "Esperando la tabla reservas..."
+                sleep 5
+              done
+
+              psql -v ON_ERROR_STOP=1 -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -f /seed/seed.sql
+          env:
+            - name: PGHOST
+              value: booking-postgres
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-booking
+                  key: DB_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-booking
+                  key: DB_PASSWORD
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: secret-booking
+                  key: DB_NAME
+          volumeMounts:
+            - name: booking-seed-volume
+              mountPath: /seed
+      volumes:
+        - name: booking-seed-volume
+          configMap:
+            name: booking-seed-sql

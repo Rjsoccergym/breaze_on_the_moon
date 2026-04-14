@@ -33,14 +33,6 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 
 // ==========================================
-// 2. COMPONENTES DE PRUEBA (Los reemplazaremos luego)
-// ==========================================
-
-const PantallaCatalogo = () => <h2>Catálogo de Habitaciones (Solo Clientes y Admins)</h2>;
-
-
-
-// ==========================================
 // 3. EL ENRUTADOR PRINCIPAL
 // ==========================================
 const App: React.FC = () => {
