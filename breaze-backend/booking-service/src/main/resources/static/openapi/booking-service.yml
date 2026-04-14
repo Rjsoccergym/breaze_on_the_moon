@@ -28,7 +28,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [CREADA, CONFIRMADA, CANCELADA]
+            enum: [RESERVADA, CONFIRMADA, CANCELADA]
           description: "Estado de las reservas a consultar."
       responses:
         '200':
@@ -49,6 +49,7 @@ paths:
         Crea una reserva para la habitación indicada.
         El sistema verifica automáticamente la disponibilidad de la habitación
         y calcula el monto total en función del precio por noche y el período.
+        Si la reserva se crea correctamente, la habitación pasa a estado RESERVADA.
         Disponible para cualquier usuario autenticado.
       security:
         - bearerAuth: []
@@ -100,7 +101,7 @@ paths:
       summary: "Confirmar una reserva"
       description: |
         Marca la reserva como CONFIRMADA y actualiza el estado de la habitación
-        a OCUPADA en room-service. Requiere rol ADMIN.
+        de RESERVADA a OCUPADA en room-service. Requiere rol ADMIN.
       security:
         - bearerAuth: []
       parameters:
@@ -199,7 +200,7 @@ components:
           description: "Monto total calculado (precioNoche × número de noches)."
         estado:
           type: string
-          enum: [CREADA, CONFIRMADA, CANCELADA]
+          enum: [RESERVADA, CONFIRMADA, CANCELADA]
           description: "Estado actual de la reserva."
         createdAt:
           type: string

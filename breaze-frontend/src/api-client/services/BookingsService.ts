@@ -16,7 +16,7 @@ export class BookingsService {
      * @throws ApiError
      */
     public static getApiV1Booking(
-        estado: 'CREADA' | 'CONFIRMADA' | 'CANCELADA',
+        estado: 'RESERVADA' | 'CONFIRMADA' | 'CANCELADA',
     ): CancelablePromise<Array<Booking>> {
         return __request(OpenAPI, {
             method: 'GET',

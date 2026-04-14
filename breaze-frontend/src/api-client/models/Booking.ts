@@ -15,7 +15,7 @@ export type Booking = {
 };
 export namespace Booking {
     export enum estado {
-        CREADA = 'CREADA',
+        RESERVADA = 'RESERVADA',
         CONFIRMADA = 'CONFIRMADA',
         CANCELADA = 'CANCELADA',
     }

@@ -19,7 +19,7 @@ export class RoomsService {
      * @throws ApiError
      */
     public static getApiV1Room(
-        status?: 'DISPONIBLE' | 'OCUPADA' | 'MANTENIMIENTO',
+        status?: 'DISPONIBLE' | 'RESERVADA' | 'OCUPADA' | 'MANTENIMIENTO',
     ): CancelablePromise<Array<Room>> {
         return __request(OpenAPI, {
             method: 'GET',

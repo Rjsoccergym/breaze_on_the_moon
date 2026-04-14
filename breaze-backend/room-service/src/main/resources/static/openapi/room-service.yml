@@ -24,7 +24,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+            enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
           description: "Filtro por estado de la habitación."
       responses:
         '200':
@@ -226,7 +226,7 @@ components:
           description: "Precio por noche."
         estado:
           type: string
-          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
           description: "Situación actual de la habitación."
         createdAt:
           type: string
@@ -267,5 +267,5 @@ components:
       properties:
         status:
           type: string
-          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
           description: "Nuevo estado de la habitación."

@@ -32,7 +32,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+            enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
           description: "Filtro por estado de la habitación."
       responses:
         '200':
@@ -213,7 +213,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [CREADA, CONFIRMADA, CANCELADA]
+            enum: [RESERVADA, CONFIRMADA, CANCELADA]
       responses:
         '200':
           description: "Lista de reservas."
@@ -230,7 +230,7 @@ paths:
     post:
       tags: [Bookings]
       summary: "Crear una nueva reserva"
-      description: "Crea una reserva para la habitación indicada. Disponible para cualquier usuario autenticado."
+      description: "Crea una reserva para la habitación indicada y marca la habitación como RESERVADA. Disponible para cualquier usuario autenticado."
       security:
         - bearerAuth: []
       requestBody:
@@ -255,7 +255,7 @@ paths:
     patch:
       tags: [Bookings]
       summary: "Confirmar una reserva"
-      description: "Marca la reserva como CONFIRMADA y bloquea la habitación (OCUPADA). Requiere rol ADMIN."
+      description: "Marca la reserva como CONFIRMADA y mueve la habitación de RESERVADA a OCUPADA. Requiere rol ADMIN."
       security:
         - bearerAuth: []
       parameters:
@@ -448,7 +448,7 @@ components:
           format: double
         estado:
           type: string
-          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
         createdAt:
           type: string
           format: date-time
@@ -487,7 +487,7 @@ components:
       properties:
         status:
           type: string
-          enum: [DISPONIBLE, OCUPADA, MANTENIMIENTO]
+          enum: [DISPONIBLE, RESERVADA, OCUPADA, MANTENIMIENTO]
 
     Booking:
       type: object
@@ -513,7 +513,7 @@ components:
           format: double
         estado:
           type: string
-          enum: [CREADA, CONFIRMADA, CANCELADA]
+          enum: [RESERVADA, CONFIRMADA, CANCELADA]
         createdAt:
           type: string
           format: date-time

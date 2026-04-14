@@ -48,7 +48,7 @@ data:
       'Habitación doble para pruebas de reserva pendiente de confirmación.',
       2,
       265000.00,
-      'DISPONIBLE',
+      'RESERVADA',
       TIMESTAMP '2026-01-10 10:05:00',
       TIMESTAMP '2026-01-10 10:05:00'
     WHERE NOT EXISTS (

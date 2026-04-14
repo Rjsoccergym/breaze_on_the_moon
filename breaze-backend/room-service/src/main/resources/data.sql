@@ -1,0 +1,9 @@
+INSERT INTO habitaciones (id, numero_identificador, tipo, descripcion, capacidad_maxima, precio_noche, estado, created_at, updated_at)
+VALUES
+    ('11111111-1111-1111-1111-111111111101', 'HAB-101', 'SENCILLA', 'Habitacion sencilla para pruebas', 1, 120000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-111111111102', 'HAB-102', 'SENCILLA', 'Habitacion sencilla con vista interior', 1, 125000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-111111111201', 'HAB-201', 'DOBLE', 'Habitacion doble estandar', 2, 185000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-111111111202', 'HAB-202', 'DOBLE', 'Habitacion doble superior', 2, 210000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-111111111301', 'HAB-301', 'SUITE', 'Suite junior para pruebas de reserva', 3, 320000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-111111111302', 'HAB-302', 'SUITE', 'Suite premium para escenarios administrativos', 4, 450000.00, 'DISPONIBLE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (numero_identificador) DO NOTHING;
