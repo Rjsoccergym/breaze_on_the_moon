@@ -1,0 +1,48 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: breaze
+
+resources:
+  - 01-namespace.yml
+  - 02-secret-auth.yml
+  - 03-secret-room.yml
+  - 04-secret.booking.yml
+  - 05-secret-gateway.yml
+  - 06-auth-postgres-pvc.yml
+  - 07-auth-deployment.yml
+  - 07a-auth-seed.yml
+  - 08-auth-postgres-service.yml
+  - 09-auth-deployment.yml
+  - 10-auth-service.yml
+  - 11-room-postgres-pvc.yml
+  - 12-room-deployment.yml
+  - 12a-room-seed.yml
+  - 13-room-postgres-service.yml
+  - 14-room-deployment.yml
+  - 15-room-service.yml
+  - 16-booking-postgres-pvc.yml
+  - 17-booking-postgres-deployment.yml
+  - 18-booking-postgres-service.yml
+  - 19-booking-deployment.yml
+  - 19a-booking-seed.yml
+  - 20-booking-service.yml
+  - 21-gateway-deployment.yml
+  - 22-gateway-service.yml
+  - 23-ingress.yml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: auth-seed-sql
+    namespace: breaze
+    files:
+      - seed.sql=sql/auth-seed.sql
+  - name: room-seed-sql
+    namespace: breaze
+    files:
+      - seed.sql=sql/room-seed.sql
+  - name: booking-seed-sql
+    namespace: breaze
+    files:
+      - seed.sql=sql/booking-seed.sql
